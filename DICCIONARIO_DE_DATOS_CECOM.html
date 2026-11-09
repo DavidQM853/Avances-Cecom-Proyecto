@@ -1,0 +1,2249 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Diccionario de Datos — Dashboard Presupuestos CECOM</title>
+<style>
+  @page {
+    size: letter portrait;
+    margin: 12mm 12mm 10mm 12mm;
+    @bottom-right {
+      content: "Página " counter(page);
+      font-size: 8pt;
+      color: #64748b;
+    }
+    @bottom-left {
+      content: "CECOM / Seanalytics Solutions — Universidad Politécnica de Durango";
+      font-size: 8pt;
+      color: #64748b;
+    }
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    color: #1e293b;
+    line-height: 1.35;
+    font-size: 8.8pt;
+    margin: 0;
+    padding: 0;
+    background: #ffffff;
+  }
+
+  p:last-child {
+    margin-bottom: 0;
+    padding-bottom: 0;
+  }
+
+  h1 {
+    color: #0f172a;
+    font-size: 18pt;
+    font-weight: 700;
+    margin-top: 0;
+    margin-bottom: 6px;
+    border-bottom: 3px solid #2563eb;
+    padding-bottom: 6px;
+  }
+
+  h2 {
+    color: #1e293b;
+    font-size: 13pt;
+    font-weight: 700;
+    margin-top: 18px;
+    margin-bottom: 8px;
+    border-bottom: 1.5px solid #cbd5e1;
+    padding-bottom: 4px;
+    break-after: avoid;
+  }
+
+  h3 {
+    color: #1d4ed8;
+    font-size: 11pt;
+    font-weight: 600;
+    margin-top: 14px;
+    margin-bottom: 6px;
+    break-after: avoid;
+  }
+
+  h4 {
+    color: #334155;
+    font-size: 9.5pt;
+    font-weight: 600;
+    margin-top: 10px;
+    margin-bottom: 4px;
+    break-after: avoid;
+  }
+
+  p {
+    margin: 4px 0 8px 0;
+    color: #334155;
+  }
+
+  hr {
+    border: none;
+    border-top: 1px solid #e2e8f0;
+    margin: 14px 0;
+  }
+
+  ul, ol {
+    margin: 4px 0 8px 0;
+    padding-left: 20px;
+    color: #334155;
+  }
+
+  li {
+    margin-bottom: 3px;
+  }
+
+  .table-container {
+    width: 100%;
+    margin: 8px 0 14px 0;
+    break-inside: avoid;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 8.5pt;
+    line-height: 1.35;
+    page-break-inside: avoid;
+    border: 1px solid #cbd5e1;
+  }
+
+  th {
+    background-color: #1e293b;
+    color: #ffffff;
+    font-weight: 600;
+    text-align: left;
+    padding: 5px 7px;
+    border: 1px solid #334155;
+    font-size: 8.5pt;
+  }
+
+  td {
+    padding: 4px 7px;
+    border: 1px solid #e2e8f0;
+    vertical-align: top;
+    color: #1e293b;
+  }
+
+  tr:nth-child(even) {
+    background-color: #f8fafc;
+  }
+
+  code {
+    font-family: 'Consolas', 'Courier New', monospace;
+    font-size: 8pt;
+    background: #f1f5f9;
+    padding: 1px 4px;
+    border-radius: 3px;
+    color: #0f172a;
+    border: 1px solid #e2e8f0;
+  }
+
+  pre {
+    background: #0f172a;
+    color: #f8fafc;
+    padding: 8px 12px;
+    border-radius: 5px;
+    font-family: 'Consolas', monospace;
+    font-size: 8pt;
+    overflow-x: auto;
+    margin: 6px 0 12px 0;
+    break-inside: avoid;
+  }
+
+  pre code {
+    background: transparent;
+    color: inherit;
+    border: none;
+    padding: 0;
+    font-size: 8pt;
+  }
+
+  .badge {
+    display: inline-block;
+    padding: 1px 4px;
+    border-radius: 3px;
+    font-size: 7pt;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+  }
+
+  .badge-pk {
+    background-color: #fee2e2;
+    color: #b91c1c;
+    border: 1px solid #fca5a5;
+  }
+
+  .badge-fk {
+    background-color: #dbeafe;
+    color: #1d4ed8;
+    border: 1px solid #bfdbfe;
+  }
+
+  .badge-uk {
+    background-color: #d1fae5;
+    color: #047857;
+    border: 1px solid #a7f3d0;
+  }
+
+  .badge-stored, .badge-virtual {
+    background-color: #ede9fe;
+    color: #6d28d9;
+    border: 1px solid #ddd6fe;
+  }
+
+  .header-card {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-left: 4px solid #2563eb;
+    padding: 8px 12px;
+    margin-bottom: 14px;
+    border-radius: 4px;
+    font-size: 8.5pt;
+  }
+
+  .header-card p {
+    margin: 2px 0;
+  }
+</style>
+</head>
+<body>
+<h1>📘 DICCIONARIO DE DATOS OFICIAL — SISTEMA DE PRESUPUESTOS CECOM</h1>
+<h2>Base de Datos: <code>cecom_presupuestos_er</code></h2>
+<h3>Archivo Fuente: <code>CECOM_Base_de_Datos.sql</code> (MySQL 8.0.16+ / MariaDB 10.6+)</h3>
+<hr/>
+<p><strong>Información General del Proyecto:</strong></p>
+<ul><li><strong>Sistema:</strong> Dashboard de Presupuestos CECOM</li><li><strong>Institución / Empresa:</strong> Seanalytics Solutions / Universidad Politécnica de Durango (UNIPOLI)</li><li><strong>Desarrollador / Alumno:</strong> David Quinteros Macias (Matrícula: 2303150087)</li><li><strong>Motor de Base de Datos:</strong> MySQL 8.0.16+ / MariaDB 10.6+ (Motor: <code>InnoDB</code>)</li><li><strong>Juego de Caracteres y Cotejamiento:</strong> <code>utf8mb4</code> / <code>utf8mb4_unicode_ci</code></li><li><strong>Estrategia de Integridad Referencial:</strong> <code>ON DELETE RESTRICT</code> en todas las claves foráneas (prevención activa de borrados accidentales de trazabilidad financiera).</li></ul>
+<hr/>
+<h2>1. Arquitectura General y Catálogo de Entidades</h2>
+<p>La base de datos <code>cecom_presupuestos_er</code> está normalizada en <strong>Tercera Forma Normal (3FN)</strong> con extensiones analíticas y de auditoría inmutable, agrupada en 6 módulos funcionales:</p>
+<pre><code class="language-">                    ┌──────────────────────────────────────────────┐
+                    │            DEPARTAMENTOS (Jerárquico)        │
+                    └──────┬───────────────┬──────────────┬────────┘
+                           │ 1:N           │ 1:N          │ 1:N
+                           ▼               ▼              ▼
+                     PRESUPUESTOS       USERS      PROYECCIONES_ANUALES
+                           │ 1:N           │              ▲
+                           ▼               ├──────────────┼──────────┐
+                PARTIDAS_PRESUPUESTALES    │              │          │
+                     │             │       ▼              │          ▼
+                     │ 1:N         │  ROLES/PERMISOS      │   BITACORA_EVENTOS
+                     ▼             │  (Seguridad Dinámica)│
+            COMPROMISOS_RESERVA    │                      │
+                     │ 1:N         │                      │
+                     ▼             │                      ▼
+             GASTOS_OPERATIVOS ◄───┘             MODELOS_PREDICTIVOS
+                     │
+                     ▼ (Pre-cálculo)
+            AGREGACIONES_TEMPORALES</code></pre>
+<h3>Índice de Tablas y Vistas</h3>
+<div class="table-container"><table><thead><tr>
+<th>#</th>
+<th>Objeto de Base de Datos</th>
+<th>Tipo</th>
+<th>Módulo</th>
+<th>Propósito Principal</th>
+</tr></thead><tbody>
+<tr>
+<td><strong>1</strong></td>
+<td><code>departamentos</code></td>
+<td>Tabla</td>
+<td>Estructura Organizacional</td>
+<td>Áreas, direcciones y gerencias jerárquicas de CECOM.</td>
+</tr>
+<tr>
+<td><strong>2</strong></td>
+<td><code>periodos_fiscales</code></td>
+<td>Tabla</td>
+<td>Dimensión Temporal</td>
+<td>Años, trimestres y meses contables con clave generada.</td>
+</tr>
+<tr>
+<td><strong>3</strong></td>
+<td><code>categorias_opex</code></td>
+<td>Tabla</td>
+<td>Catálogo Financiero</td>
+<td>Cuentas de gasto operativo categorizadas con tipos enum.</td>
+</tr>
+<tr>
+<td><strong>4</strong></td>
+<td><code>users</code></td>
+<td>Tabla</td>
+<td>Seguridad y Acceso</td>
+<td>Cuentas de usuarios y vinculación con departamentos.</td>
+</tr>
+<tr>
+<td><strong>5</strong></td>
+<td><code>roles</code></td>
+<td>Tabla</td>
+<td>Seguridad y Acceso</td>
+<td>Perfiles de acceso estáticos y dinámicos basados en reglas.</td>
+</tr>
+<tr>
+<td><strong>6</strong></td>
+<td><code>permisos</code></td>
+<td>Tabla</td>
+<td>Seguridad y Acceso</td>
+<td>Acciones atómicas del sistema clasificadas por módulo.</td>
+</tr>
+<tr>
+<td><strong>7</strong></td>
+<td><code>rol_permiso</code></td>
+<td>Tabla Pivot</td>
+<td>Seguridad y Acceso</td>
+<td>Asignación M:N de permisos por rol.</td>
+</tr>
+<tr>
+<td><strong>8</strong></td>
+<td><code>user_rol</code></td>
+<td>Tabla Pivot</td>
+<td>Seguridad y Acceso</td>
+<td>Asignación de roles con vigencia, alcance global o departamental.</td>
+</tr>
+<tr>
+<td><strong>9</strong></td>
+<td><code>user_rol_categoria_restriccion</code></td>
+<td>Tabla Pivot</td>
+<td>Seguridad y Acceso</td>
+<td>Restricciones explícitas por cuenta OPEX para un rol asignado.</td>
+</tr>
+<tr>
+<td><strong>10</strong></td>
+<td><code>historial_asignaciones</code></td>
+<td>Tabla</td>
+<td>Auditoría</td>
+<td>Registro inmutable de asignación y revocación de roles.</td>
+</tr>
+<tr>
+<td><strong>11</strong></td>
+<td><code>presupuestos</code></td>
+<td>Tabla</td>
+<td>Gestión Presupuestal</td>
+<td>Asignación anual por departamento y estado de aprobación.</td>
+</tr>
+<tr>
+<td><strong>12</strong></td>
+<td><code>partidas_presupuestales</code></td>
+<td>Tabla</td>
+<td>Gestión Presupuestal</td>
+<td>Techo financiero por cuenta OPEX y saldo virtual disponible.</td>
+</tr>
+<tr>
+<td><strong>13</strong></td>
+<td><code>compromisos_reserva</code></td>
+<td>Tabla</td>
+<td>Control de Compras</td>
+<td>Apartados de saldo antes de la factura (preventivas/adjudicaciones).</td>
+</tr>
+<tr>
+<td><strong>14</strong></td>
+<td><code>gastos_operativos</code></td>
+<td>Tabla</td>
+<td>Transaccional</td>
+<td>Hechos económicos devengados con folio fiscal y metadata JSON.</td>
+</tr>
+<tr>
+<td><strong>15</strong></td>
+<td><code>bitacora_eventos</code></td>
+<td>Tabla</td>
+<td>Auditoría Global</td>
+<td>Log centralizado de mutaciones en cualquier entidad del sistema.</td>
+</tr>
+<tr>
+<td><strong>16</strong></td>
+<td><code>modelos_predictivos</code></td>
+<td>Tabla</td>
+<td>Inteligencia de Negocio</td>
+<td>Registro de modelos de ML, versiones y métricas de validación.</td>
+</tr>
+<tr>
+<td><strong>17</strong></td>
+<td><code>proyecciones_anuales</code></td>
+<td>Tabla</td>
+<td>Inteligencia de Negocio</td>
+<td>Estimación de gastos proyectados para el siguiente ejercicio.</td>
+</tr>
+<tr>
+<td><strong>18</strong></td>
+<td><code>agregaciones_temporales</code></td>
+<td>Tabla</td>
+<td>Analítica OLAP</td>
+<td>Series de tiempo precalculadas en 6 escalas (diario a anual).</td>
+</tr>
+<tr>
+<td><strong>19</strong></td>
+<td><code>v_reservas_conciliacion</code></td>
+<td>Vista SQL</td>
+<td>Conciliación y Control</td>
+<td>Cuadre contable entre reservas y gastos devengados.</td>
+</tr>
+<tr>
+<td><strong>20</strong></td>
+<td><code>v_partidas_conciliacion</code></td>
+<td>Vista SQL</td>
+<td>Conciliación y Control</td>
+<td>Verificación de integridad entre montos de partida y transacciones.</td>
+</tr>
+<tr>
+<td><strong>21</strong></td>
+<td><code>v_presupuestos_conciliacion</code></td>
+<td>Vista SQL</td>
+<td>Conciliación y Control</td>
+<td>Validación de sumatorias entre partidas y el presupuesto total.</td>
+</tr>
+</tbody></table></div>
+<hr/>
+<h2>2. Especificación Detallada de Tablas</h2>
+<hr/>
+<h3>2.1 Tabla: <code>departamentos</code></h3>
+<p><strong>Descripción:</strong> Almacena el organigrama de la entidad con soporte de autorreferencia jerárquica (dirección general $\rightarrow$ gerencias $\rightarrow$ coordinaciones).</p>
+<div class="table-container"><table><thead><tr>
+<th>Columna</th>
+<th>Tipo de Dato</th>
+<th>Nulo</th>
+<th>Default</th>
+<th>Restricciones / Claves</th>
+<th>Descripción</th>
+</tr></thead><tbody>
+<tr>
+<td><code>id</code></td>
+<td><code>BIGINT UNSIGNED</code></td>
+<td>NO</td>
+<td>Auto</td>
+<td><code><span class="badge badge-pk">PRIMARY KEY</span></code></td>
+<td>Identificador único del departamento.</td>
+</tr>
+<tr>
+<td><code>nombre</code></td>
+<td><code>VARCHAR(255)</code></td>
+<td>NO</td>
+<td>-</td>
+<td>-</td>
+<td>Nombre descriptivo del departamento.</td>
+</tr>
+<tr>
+<td><code>codigo</code></td>
+<td><code>VARCHAR(20)</code></td>
+<td>NO</td>
+<td>-</td>
+<td><code>UNIQUE (codigo)</code></td>
+<td>Código nemónico institucional único (e.g. <code>DG</code>, <code>TI</code>, <code>FIN</code>).</td>
+</tr>
+<tr>
+<td><code>descripcion</code></td>
+<td><code>TEXT</code></td>
+<td>SÍ</td>
+<td>NULL</td>
+<td>-</td>
+<td>Misión, funciones o facultades del área.</td>
+</tr>
+<tr>
+<td><code>departamento_padre_id</code></td>
+<td><code>BIGINT UNSIGNED</code></td>
+<td>SÍ</td>
+<td>NULL</td>
+<td><code><span class="badge badge-fk">FK</span> (id) ON DELETE RESTRICT</code></td>
+<td>Referencia al departamento jerárquico superior.</td>
+</tr>
+<tr>
+<td><code>activo</code></td>
+<td><code>BOOLEAN</code></td>
+<td>NO</td>
+<td><code>TRUE</code></td>
+<td><code>CHECK (activo IN (0,1))</code></td>
+<td>Estatus de operación (1=Activo, 0=Inactivo).</td>
+</tr>
+<tr>
+<td><code>created_at</code></td>
+<td><code>TIMESTAMP</code></td>
+<td>SÍ</td>
+<td><code>CURRENT_TIMESTAMP</code></td>
+<td>-</td>
+<td>Fecha y hora de creación del registro.</td>
+</tr>
+<tr>
+<td><code>updated_at</code></td>
+<td><code>TIMESTAMP</code></td>
+<td>SÍ</td>
+<td><code>CURRENT_TIMESTAMP ON UPDATE</code></td>
+<td>-</td>
+<td>Fecha y hora de la última modificación.</td>
+</tr>
+</tbody></table></div>
+<ul><li><strong>Índices:</strong></li><li><code><span class="badge badge-pk">PRIMARY KEY</span> (id)</code></li><li><code>UNIQUE KEY (codigo)</code></li><li><code>INDEX idx_depto_activo (activo)</code></li><li><strong>Claves Foráneas:</strong></li><li><code>CONSTRAINT fk_depto_padre FOREIGN KEY (departamento_padre_id) REFERENCES departamentos(id) ON DELETE RESTRICT</code></li></ul>
+<hr/>
+<h3>2.2 Tabla: <code>periodos_fiscales</code></h3>
+<p><strong>Descripción:</strong> Modela los ejercicios presupuestales y sus subdivisiones trimestrales y mensuales con clave normalizada generada por el motor.</p>
+<div class="table-container"><table><thead><tr>
+<th>Columna</th>
+<th>Tipo de Dato</th>
+<th>Nulo</th>
+<th>Default</th>
+<th>Restricciones / Claves</th>
+<th>Descripción</th>
+</tr></thead><tbody>
+<tr>
+<td><code>id</code></td>
+<td><code>BIGINT UNSIGNED</code></td>
+<td>NO</td>
+<td>Auto</td>
+<td><code><span class="badge badge-pk">PRIMARY KEY</span></code></td>
+<td>Identificador único del periodo fiscal.</td>
+</tr>
+<tr>
+<td><code>anio</code></td>
+<td><code>SMALLINT UNSIGNED</code></td>
+<td>NO</td>
+<td>-</td>
+<td><code>CHECK (anio BETWEEN 1900 AND 9999)</code></td>
+<td>Año calendario del ejercicio presupuestal.</td>
+</tr>
+<tr>
+<td><code>trimestre</code></td>
+<td><code>TINYINT UNSIGNED</code></td>
+<td>SÍ</td>
+<td>NULL</td>
+<td><code>CHECK (trimestre IS NULL OR BETWEEN 1 AND 4)</code></td>
+<td>Número de trimestre (1 a 4) o NULL para periodo anual.</td>
+</tr>
+<tr>
+<td><code>mes</code></td>
+<td><code>TINYINT UNSIGNED</code></td>
+<td>SÍ</td>
+<td>NULL</td>
+<td><code>CHECK (mes IS NULL OR BETWEEN 1 AND 12)</code></td>
+<td>Número de mes (1 a 12) o NULL si no es escala mensual.</td>
+</tr>
+<tr>
+<td><code>clave_periodo</code></td>
+<td><code>VARCHAR(12)</code></td>
+<td>NO</td>
+<td><span class="badge badge-virtual">VIRTUAL</span></td>
+<td><code>GENERATED ALWAYS AS ... <span class="badge badge-stored">STORED</span></code>, <code>UNIQUE</code></td>
+<td>Código unívoco del periodo: <code>YYYY-A</code>, <code>YYYY-T1</code>, <code>YYYY-M01</code>.</td>
+</tr>
+<tr>
+<td><code>fecha_inicio</code></td>
+<td><code>DATE</code></td>
+<td>NO</td>
+<td>-</td>
+<td><code>CHECK (fecha_inicio <= fecha_fin)</code></td>
+<td>Fecha formal de apertura del periodo.</td>
+</tr>
+<tr>
+<td><code>fecha_fin</code></td>
+<td><code>DATE</code></td>
+<td>NO</td>
+<td>-</td>
+<td><code>CHECK (YEAR(fecha_inicio)=anio AND YEAR(fecha_fin)=anio)</code></td>
+<td>Fecha formal de cierre del periodo.</td>
+</tr>
+<tr>
+<td><code>cerrado</code></td>
+<td><code>BOOLEAN</code></td>
+<td>NO</td>
+<td><code>FALSE</code></td>
+<td><code>CHECK (cerrado IN (0,1))</code></td>
+<td>Indicador de ejercicio dictaminado/bloqueado.</td>
+</tr>
+<tr>
+<td><code>created_at</code></td>
+<td><code>TIMESTAMP</code></td>
+<td>SÍ</td>
+<td><code>CURRENT_TIMESTAMP</code></td>
+<td>-</td>
+<td>Creación.</td>
+</tr>
+<tr>
+<td><code>updated_at</code></td>
+<td><code>TIMESTAMP</code></td>
+<td>SÍ</td>
+<td><code>CURRENT_TIMESTAMP ON UPDATE</code></td>
+<td>-</td>
+<td>Modificación.</td>
+</tr>
+</tbody></table></div>
+<ul><li><strong>Regla de Coherencia Contable:</strong></li><li><code>CONSTRAINT ck_periodo_coherencia CHECK (mes IS NULL OR trimestre IS NULL OR trimestre = CEILING(mes/3))</code></li><li><strong>Índices:</strong></li><li><code><span class="badge badge-pk">PRIMARY KEY</span> (id)</code></li><li><code>UNIQUE KEY uq_periodo_clave (clave_periodo)</code></li><li><code>INDEX idx_periodo_fechas (fecha_inicio, fecha_fin)</code></li></ul>
+<hr/>
+<h3>2.3 Tabla: <code>categorias_opex</code></h3>
+<p><strong>Descripción:</strong> Catálogo de cuentas y conceptos de gastos operativos (OPEX) clasificados por naturaleza técnica y financiera.</p>
+<div class="table-container"><table><thead><tr>
+<th>Columna</th>
+<th>Tipo de Dato</th>
+<th>Nulo</th>
+<th>Default</th>
+<th>Restricciones / Claves</th>
+<th>Descripción</th>
+</tr></thead><tbody>
+<tr>
+<td><code>id</code></td>
+<td><code>BIGINT UNSIGNED</code></td>
+<td>NO</td>
+<td>Auto</td>
+<td><code><span class="badge badge-pk">PRIMARY KEY</span></code></td>
+<td>Identificador único de la categoría.</td>
+</tr>
+<tr>
+<td><code>nombre</code></td>
+<td><code>VARCHAR(255)</code></td>
+<td>NO</td>
+<td>-</td>
+<td>-</td>
+<td>Nombre contable (e.g., Servicios de Nube, Licenciamiento).</td>
+</tr>
+<tr>
+<td><code>codigo</code></td>
+<td><code>VARCHAR(20)</code></td>
+<td>NO</td>
+<td>-</td>
+<td><code>UNIQUE (codigo)</code></td>
+<td>Código contable único (e.g. <code>OPEX-TI-01</code>).</td>
+</tr>
+<tr>
+<td><code>descripcion</code></td>
+<td><code>TEXT</code></td>
+<td>SÍ</td>
+<td>NULL</td>
+<td>-</td>
+<td>Justificación de gastos imputables a esta cuenta.</td>
+</tr>
+<tr>
+<td><code>tipo_gasto</code></td>
+<td><code>VARCHAR(30)</code></td>
+<td>SÍ</td>
+<td>NULL</td>
+<td><code>CHECK (tipo_gasto IN ('nomina','servicios','materiales','mantenimiento','tecnologia','capacitacion','viaticos','arrendamiento','seguros','otros'))</code></td>
+<td>Clasificador económico estandarizado.</td>
+</tr>
+<tr>
+<td><code>categoria_padre_id</code></td>
+<td><code>BIGINT UNSIGNED</code></td>
+<td>SÍ</td>
+<td>NULL</td>
+<td><code><span class="badge badge-fk">FK</span> (id) ON DELETE RESTRICT</code></td>
+<td>Cuenta mayor a la que pertenece jerárquicamente.</td>
+</tr>
+<tr>
+<td><code>activo</code></td>
+<td><code>BOOLEAN</code></td>
+<td>NO</td>
+<td><code>TRUE</code></td>
+<td><code>CHECK (activo IN (0,1))</code></td>
+<td>Disponibilidad para formulación presupuestal.</td>
+</tr>
+<tr>
+<td><code>created_at</code></td>
+<td><code>TIMESTAMP</code></td>
+<td>SÍ</td>
+<td><code>CURRENT_TIMESTAMP</code></td>
+<td>-</td>
+<td>Creación.</td>
+</tr>
+<tr>
+<td><code>updated_at</code></td>
+<td><code>TIMESTAMP</code></td>
+<td>SÍ</td>
+<td><code>CURRENT_TIMESTAMP ON UPDATE</code></td>
+<td>-</td>
+<td>Modificación.</td>
+</tr>
+</tbody></table></div>
+<ul><li><strong>Índices:</strong></li><li><code><span class="badge badge-pk">PRIMARY KEY</span> (id)</code></li><li><code>UNIQUE KEY (codigo)</code></li><li><code>INDEX idx_categoria_tipo (tipo_gasto)</code></li></ul>
+<hr/>
+<h3>2.4 Tabla: <code>users</code></h3>
+<p><strong>Descripción:</strong> Usuarios del sistema con credenciales cifradas y asociación a un departamento institucional.</p>
+<div class="table-container"><table><thead><tr>
+<th>Columna</th>
+<th>Tipo de Dato</th>
+<th>Nulo</th>
+<th>Default</th>
+<th>Restricciones / Claves</th>
+<th>Descripción</th>
+</tr></thead><tbody>
+<tr>
+<td><code>id</code></td>
+<td><code>BIGINT UNSIGNED</code></td>
+<td>NO</td>
+<td>Auto</td>
+<td><code><span class="badge badge-pk">PRIMARY KEY</span></code></td>
+<td>Identificador único de usuario.</td>
+</tr>
+<tr>
+<td><code>name</code></td>
+<td><code>VARCHAR(255)</code></td>
+<td>NO</td>
+<td>-</td>
+<td>-</td>
+<td>Nombre completo del funcionario.</td>
+</tr>
+<tr>
+<td><code>email</code></td>
+<td><code>VARCHAR(255)</code></td>
+<td>NO</td>
+<td>-</td>
+<td><code>UNIQUE (email)</code></td>
+<td>Correo institucional único.</td>
+</tr>
+<tr>
+<td><code>email_verified_at</code></td>
+<td><code>TIMESTAMP</code></td>
+<td>SÍ</td>
+<td>NULL</td>
+<td>-</td>
+<td>Verificación de cuenta.</td>
+</tr>
+<tr>
+<td><code>password</code></td>
+<td><code>VARCHAR(255)</code></td>
+<td>NO</td>
+<td>-</td>
+<td><code>COMMENT 'Hash generado por Laravel'</code></td>
+<td>Contraseña bajo hash Bcrypt / Argon2ID.</td>
+</tr>
+<tr>
+<td><code>remember_token</code></td>
+<td><code>VARCHAR(100)</code></td>
+<td>SÍ</td>
+<td>NULL</td>
+<td>-</td>
+<td>Token de sesión persistente.</td>
+</tr>
+<tr>
+<td><code>departamento_id</code></td>
+<td><code>BIGINT UNSIGNED</code></td>
+<td>SÍ</td>
+<td>NULL</td>
+<td><code><span class="badge badge-fk">FK</span> departamentos(id) ON DELETE RESTRICT</code></td>
+<td>Departamento de adscripción.</td>
+</tr>
+<tr>
+<td><code>activo</code></td>
+<td><code>BOOLEAN</code></td>
+<td>NO</td>
+<td><code>TRUE</code></td>
+<td><code>CHECK (activo IN (0,1))</code></td>
+<td>Estado de la cuenta (1=Habilitada, 0=Suspendida).</td>
+</tr>
+<tr>
+<td><code>created_at</code></td>
+<td><code>TIMESTAMP</code></td>
+<td>SÍ</td>
+<td><code>CURRENT_TIMESTAMP</code></td>
+<td>-</td>
+<td>Creación.</td>
+</tr>
+<tr>
+<td><code>updated_at</code></td>
+<td><code>TIMESTAMP</code></td>
+<td>SÍ</td>
+<td><code>CURRENT_TIMESTAMP ON UPDATE</code></td>
+<td>-</td>
+<td>Modificación.</td>
+</tr>
+</tbody></table></div>
+<hr/>
+<h3>2.5 Tabla: <code>roles</code></h3>
+<p><strong>Descripción:</strong> Perfiles de seguridad con soporte de evaluación dinámica mediante reglas JSON.</p>
+<div class="table-container"><table><thead><tr>
+<th>Columna</th>
+<th>Tipo de Dato</th>
+<th>Nulo</th>
+<th>Default</th>
+<th>Restricciones / Claves</th>
+<th>Descripción</th>
+</tr></thead><tbody>
+<tr>
+<td><code>id</code></td>
+<td><code>BIGINT UNSIGNED</code></td>
+<td>NO</td>
+<td>Auto</td>
+<td><code><span class="badge badge-pk">PRIMARY KEY</span></code></td>
+<td>Identificador único de rol.</td>
+</tr>
+<tr>
+<td><code>nombre</code></td>
+<td><code>VARCHAR(255)</code></td>
+<td>NO</td>
+<td>-</td>
+<td>-</td>
+<td>Nombre humano del rol (e.g. Auditor OPEX, Aprobador).</td>
+</tr>
+<tr>
+<td><code>slug</code></td>
+<td><code>VARCHAR(100)</code></td>
+<td>NO</td>
+<td>-</td>
+<td><code>UNIQUE (slug)</code></td>
+<td>Identificador nemónico del rol en el código.</td>
+</tr>
+<tr>
+<td><code>descripcion</code></td>
+<td><code>TEXT</code></td>
+<td>SÍ</td>
+<td>NULL</td>
+<td>-</td>
+<td>Propósito del perfil de acceso.</td>
+</tr>
+<tr>
+<td><code>es_dinamico</code></td>
+<td><code>BOOLEAN</code></td>
+<td>NO</td>
+<td><code>FALSE</code></td>
+<td><code>CHECK (es_dinamico IN (0,1))</code></td>
+<td>Si es asignado automáticamente por motor de reglas.</td>
+</tr>
+<tr>
+<td><code>reglas_asignacion</code></td>
+<td><code>JSON</code></td>
+<td>SÍ</td>
+<td>NULL</td>
+<td>-</td>
+<td>Criterios lógicos de evaluación histórica en formato JSON.</td>
+</tr>
+<tr>
+<td><code>created_at</code></td>
+<td><code>TIMESTAMP</code></td>
+<td>SÍ</td>
+<td><code>CURRENT_TIMESTAMP</code></td>
+<td>-</td>
+<td>Creación.</td>
+</tr>
+<tr>
+<td><code>updated_at</code></td>
+<td><code>TIMESTAMP</code></td>
+<td>SÍ</td>
+<td><code>CURRENT_TIMESTAMP ON UPDATE</code></td>
+<td>-</td>
+<td>Modificación.</td>
+</tr>
+</tbody></table></div>
+<hr/>
+<h3>2.6 Tabla: <code>permisos</code></h3>
+<p><strong>Descripción:</strong> Catálogo de capacidades granulares del backend.</p>
+<div class="table-container"><table><thead><tr>
+<th>Columna</th>
+<th>Tipo de Dato</th>
+<th>Nulo</th>
+<th>Default</th>
+<th>Restricciones / Claves</th>
+<th>Descripción</th>
+</tr></thead><tbody>
+<tr>
+<td><code>id</code></td>
+<td><code>BIGINT UNSIGNED</code></td>
+<td>NO</td>
+<td>Auto</td>
+<td><code><span class="badge badge-pk">PRIMARY KEY</span></code></td>
+<td>Identificador único del permiso.</td>
+</tr>
+<tr>
+<td><code>nombre</code></td>
+<td><code>VARCHAR(255)</code></td>
+<td>NO</td>
+<td>-</td>
+<td>-</td>
+<td>Nombre legible del privilegio.</td>
+</tr>
+<tr>
+<td><code>slug</code></td>
+<td><code>VARCHAR(100)</code></td>
+<td>NO</td>
+<td>-</td>
+<td><code>UNIQUE (slug)</code></td>
+<td>Identificador del permiso (e.g. <code>presupuestos.aprobar</code>).</td>
+</tr>
+<tr>
+<td><code>modulo</code></td>
+<td><code>VARCHAR(50)</code></td>
+<td>NO</td>
+<td>-</td>
+<td><code>INDEX idx_permiso_modulo</code></td>
+<td>Subsistema al que aplica (<code>presupuestos</code>, <code>gastos</code>, etc.).</td>
+</tr>
+<tr>
+<td><code>descripcion</code></td>
+<td><code>TEXT</code></td>
+<td>SÍ</td>
+<td>NULL</td>
+<td>-</td>
+<td>Detalle de las acciones amparadas.</td>
+</tr>
+<tr>
+<td><code>created_at</code></td>
+<td><code>TIMESTAMP</code></td>
+<td>SÍ</td>
+<td><code>CURRENT_TIMESTAMP</code></td>
+<td>-</td>
+<td>Creación.</td>
+</tr>
+<tr>
+<td><code>updated_at</code></td>
+<td><code>TIMESTAMP</code></td>
+<td>SÍ</td>
+<td><code>CURRENT_TIMESTAMP ON UPDATE</code></td>
+<td>-</td>
+<td>Modificación.</td>
+</tr>
+</tbody></table></div>
+<hr/>
+<h3>2.7 Tabla: <code>rol_permiso</code></h3>
+<p><strong>Descripción:</strong> Tabla de relación M:N entre roles y permisos.</p>
+<div class="table-container"><table><thead><tr>
+<th>Columna</th>
+<th>Tipo de Dato</th>
+<th>Nulo</th>
+<th>Default</th>
+<th>Restricciones / Claves</th>
+<th>Descripción</th>
+</tr></thead><tbody>
+<tr>
+<td><code>rol_id</code></td>
+<td><code>BIGINT UNSIGNED</code></td>
+<td>NO</td>
+<td>-</td>
+<td><code><span class="badge badge-pk">PK</span>, <span class="badge badge-fk">FK</span> roles(id) ON DELETE RESTRICT</code></td>
+<td>Rol titular del permiso.</td>
+</tr>
+<tr>
+<td><code>permiso_id</code></td>
+<td><code>BIGINT UNSIGNED</code></td>
+<td>NO</td>
+<td>-</td>
+<td><code><span class="badge badge-pk">PK</span>, <span class="badge badge-fk">FK</span> permisos(id) ON DELETE RESTRICT</code></td>
+<td>Permiso concedido.</td>
+</tr>
+</tbody></table></div>
+<ul><li><strong>Clave Primaria Compuesta:</strong> <code><span class="badge badge-pk">PRIMARY KEY</span> (rol_id, permiso_id)</code>.</li></ul>
+<hr/>
+<h3>2.8 Tabla: <code>user_rol</code></h3>
+<p><strong>Descripción:</strong> Asignación de roles a usuarios, con control de vigencias y delimitación de alcance institucional o departamental.</p>
+<div class="table-container"><table><thead><tr>
+<th>Columna</th>
+<th>Tipo de Dato</th>
+<th>Nulo</th>
+<th>Default</th>
+<th>Restricciones / Claves</th>
+<th>Descripción</th>
+</tr></thead><tbody>
+<tr>
+<td><code>id</code></td>
+<td><code>BIGINT UNSIGNED</code></td>
+<td>NO</td>
+<td>Auto</td>
+<td><code><span class="badge badge-pk">PRIMARY KEY</span></code></td>
+<td>Identificador de asignación.</td>
+</tr>
+<tr>
+<td><code>user_id</code></td>
+<td><code>BIGINT UNSIGNED</code></td>
+<td>NO</td>
+<td>-</td>
+<td><code><span class="badge badge-fk">FK</span> users(id) ON DELETE RESTRICT</code></td>
+<td>Usuario que recibe el rol.</td>
+</tr>
+<tr>
+<td><code>rol_id</code></td>
+<td><code>BIGINT UNSIGNED</code></td>
+<td>NO</td>
+<td>-</td>
+<td><code><span class="badge badge-fk">FK</span> roles(id) ON DELETE RESTRICT</code></td>
+<td>Rol otorgado.</td>
+</tr>
+<tr>
+<td><code>departamento_id</code></td>
+<td><code>BIGINT UNSIGNED</code></td>
+<td>SÍ</td>
+<td>NULL</td>
+<td><code><span class="badge badge-fk">FK</span> departamentos(id) ON DELETE RESTRICT</code></td>
+<td>Departamento al que queda acotado el rol.</td>
+</tr>
+<tr>
+<td><code>alcance_global</code></td>
+<td><code>BOOLEAN</code></td>
+<td>NO</td>
+<td><code>FALSE</code></td>
+<td><code>CHECK ((alcance_global=1 AND departamento_id IS NULL) OR (alcance_global=0 AND departamento_id IS NOT NULL))</code></td>
+<td>Define si el permiso trasciende a toda la entidad.</td>
+</tr>
+<tr>
+<td><code>vigencia_inicio</code></td>
+<td><code>DATE</code></td>
+<td>SÍ</td>
+<td>NULL</td>
+<td>-</td>
+<td>Fecha a partir de la cual el rol entra en vigor.</td>
+</tr>
+<tr>
+<td><code>vigencia_fin</code></td>
+<td><code>DATE</code></td>
+<td>SÍ</td>
+<td>NULL</td>
+<td><code>CHECK (vigencia_fin >= vigencia_inicio)</code></td>
+<td>Fecha de caducidad de la asignación.</td>
+</tr>
+<tr>
+<td><code>activo</code></td>
+<td><code>BOOLEAN</code></td>
+<td>NO</td>
+<td><code>TRUE</code></td>
+<td><code>CHECK (activo IN (0,1))</code></td>
+<td>Estatus de la asignación.</td>
+</tr>
+<tr>
+<td><code>created_at</code></td>
+<td><code>TIMESTAMP</code></td>
+<td>SÍ</td>
+<td><code>CURRENT_TIMESTAMP</code></td>
+<td>-</td>
+<td>Creación.</td>
+</tr>
+<tr>
+<td><code>updated_at</code></td>
+<td><code>TIMESTAMP</code></td>
+<td>SÍ</td>
+<td><code>CURRENT_TIMESTAMP ON UPDATE</code></td>
+<td>-</td>
+<td>Modificación.</td>
+</tr>
+</tbody></table></div>
+<ul><li><strong>Índices:</strong></li><li><code>INDEX idx_ur_vigencia (user_id, activo, vigencia_inicio, vigencia_fin)</code></li><li><code>INDEX idx_ur_depto_rol (departamento_id, rol_id)</code></li></ul>
+<hr/>
+<h3>2.9 Tabla: <code>user_rol_categoria_restriccion</code></h3>
+<p><strong>Descripción:</strong> Restricciones de seguridad por objeto de gasto aplicadas a una asignación de rol (<code>user_rol</code>).</p>
+<div class="table-container"><table><thead><tr>
+<th>Columna</th>
+<th>Tipo de Dato</th>
+<th>Nulo</th>
+<th>Default</th>
+<th>Restricciones / Claves</th>
+<th>Descripción</th>
+</tr></thead><tbody>
+<tr>
+<td><code>user_rol_id</code></td>
+<td><code>BIGINT UNSIGNED</code></td>
+<td>NO</td>
+<td>-</td>
+<td><code><span class="badge badge-pk">PK</span>, <span class="badge badge-fk">FK</span> user_rol(id) ON DELETE RESTRICT</code></td>
+<td>Asignación de rol afectada.</td>
+</tr>
+<tr>
+<td><code>categoria_opex_id</code></td>
+<td><code>BIGINT UNSIGNED</code></td>
+<td>NO</td>
+<td>-</td>
+<td><code><span class="badge badge-pk">PK</span>, <span class="badge badge-fk">FK</span> categorias_opex(id) ON DELETE RESTRICT</code></td>
+<td>Categoría OPEX restringida/bloqueada para este rol.</td>
+</tr>
+</tbody></table></div>
+<ul><li><strong>Clave Primaria Compuesta:</strong> <code><span class="badge badge-pk">PRIMARY KEY</span> (user_rol_id, categoria_opex_id)</code>.</li></ul>
+<hr/>
+<h3>2.10 Tabla: <code>historial_asignaciones</code></h3>
+<p><strong>Descripción:</strong> Registro de auditoría inmutable sobre transiciones de roles dinámicos o manuales.</p>
+<div class="table-container"><table><thead><tr>
+<th>Columna</th>
+<th>Tipo de Dato</th>
+<th>Nulo</th>
+<th>Default</th>
+<th>Restricciones / Claves</th>
+<th>Descripción</th>
+</tr></thead><tbody>
+<tr>
+<td><code>id</code></td>
+<td><code>BIGINT UNSIGNED</code></td>
+<td>NO</td>
+<td>Auto</td>
+<td><code><span class="badge badge-pk">PRIMARY KEY</span></code></td>
+<td>Identificador único de evento.</td>
+</tr>
+<tr>
+<td><code>user_id</code></td>
+<td><code>BIGINT UNSIGNED</code></td>
+<td>NO</td>
+<td>-</td>
+<td><code><span class="badge badge-fk">FK</span> users(id) ON DELETE RESTRICT</code></td>
+<td>Usuario sobre quien recae la acción.</td>
+</tr>
+<tr>
+<td><code>rol_id</code></td>
+<td><code>BIGINT UNSIGNED</code></td>
+<td>NO</td>
+<td>-</td>
+<td><code><span class="badge badge-fk">FK</span> roles(id) ON DELETE RESTRICT</code></td>
+<td>Rol involucrado.</td>
+</tr>
+<tr>
+<td><code>accion</code></td>
+<td><code>VARCHAR(20)</code></td>
+<td>NO</td>
+<td>-</td>
+<td><code>CHECK (accion IN ('asignar','revocar','modificar'))</code></td>
+<td>Tipo de operación ejecutada.</td>
+</tr>
+<tr>
+<td><code>datos_anteriores</code></td>
+<td><code>JSON</code></td>
+<td>SÍ</td>
+<td>NULL</td>
+<td>-</td>
+<td>Snapshot del estado previo.</td>
+</tr>
+<tr>
+<td><code>datos_nuevos</code></td>
+<td><code>JSON</code></td>
+<td>SÍ</td>
+<td>NULL</td>
+<td>-</td>
+<td>Snapshot del nuevo estado.</td>
+</tr>
+<tr>
+<td><code>motivo</code></td>
+<td><code>VARCHAR(500)</code></td>
+<td>NO</td>
+<td>-</td>
+<td>-</td>
+<td>Justificación de la decisión o regla activada.</td>
+</tr>
+<tr>
+<td><code>ejecutado_por</code></td>
+<td><code>BIGINT UNSIGNED</code></td>
+<td>SÍ</td>
+<td>NULL</td>
+<td><code><span class="badge badge-fk">FK</span> users(id) ON DELETE RESTRICT</code></td>
+<td>Usuario operador o NULL si fue el motor automático.</td>
+</tr>
+<tr>
+<td><code>created_at</code></td>
+<td><code>TIMESTAMP</code></td>
+<td>SÍ</td>
+<td><code>CURRENT_TIMESTAMP</code></td>
+<td>-</td>
+<td>Marca temporal exacta de la acción.</td>
+</tr>
+<tr>
+<td><code>updated_at</code></td>
+<td><code>TIMESTAMP</code></td>
+<td>SÍ</td>
+<td><code>CURRENT_TIMESTAMP ON UPDATE</code></td>
+<td>-</td>
+<td>-</td>
+</tr>
+</tbody></table></div>
+<ul><li><strong>Índices:</strong></li><li><code>INDEX idx_hist_user_fecha (user_id, created_at)</code></li></ul>
+<hr/>
+<h3>2.11 Tabla: <code>presupuestos</code></h3>
+<p><strong>Descripción:</strong> Encabezado de la asignación presupuestal anual por departamento, con columna virtual persistida de saldo disponible.</p>
+<div class="table-container"><table><thead><tr>
+<th>Columna</th>
+<th>Tipo de Dato</th>
+<th>Nulo</th>
+<th>Default</th>
+<th>Restricciones / Claves</th>
+<th>Descripción</th>
+</tr></thead><tbody>
+<tr>
+<td><code>id</code></td>
+<td><code>BIGINT UNSIGNED</code></td>
+<td>NO</td>
+<td>Auto</td>
+<td><code><span class="badge badge-pk">PRIMARY KEY</span></code></td>
+<td>Identificador del presupuesto.</td>
+</tr>
+<tr>
+<td><code>departamento_id</code></td>
+<td><code>BIGINT UNSIGNED</code></td>
+<td>NO</td>
+<td>-</td>
+<td><code><span class="badge badge-fk">FK</span> departamentos(id) ON DELETE RESTRICT</code></td>
+<td>Departamento asignatario.</td>
+</tr>
+<tr>
+<td><code>periodo_fiscal_id</code></td>
+<td><code>BIGINT UNSIGNED</code></td>
+<td>NO</td>
+<td>-</td>
+<td><code><span class="badge badge-fk">FK</span> periodos_fiscales(id) ON DELETE RESTRICT</code></td>
+<td>Ejercicio fiscal de vigencia.</td>
+</tr>
+<tr>
+<td><code>monto_total</code></td>
+<td><code>DECIMAL(15,2)</code></td>
+<td>NO</td>
+<td><code>0.00</code></td>
+<td><code>CHECK (monto_total >= 0)</code></td>
+<td>Techo presupuestal global autorizado.</td>
+</tr>
+<tr>
+<td><code>monto_ejercido</code></td>
+<td><code>DECIMAL(15,2)</code></td>
+<td>NO</td>
+<td><code>0.00</code></td>
+<td><code>CHECK (monto_ejercido >= 0)</code></td>
+<td>Suma de gastos devengados y liquidados.</td>
+</tr>
+<tr>
+<td><code>monto_comprometido</code></td>
+<td><code>DECIMAL(15,2)</code></td>
+<td>NO</td>
+<td><code>0.00</code></td>
+<td><code>CHECK (monto_comprometido >= 0)</code></td>
+<td>Fondos reservados en trámite de compra.</td>
+</tr>
+<tr>
+<td><code>monto_disponible</code></td>
+<td><code>DECIMAL(15,2)</code></td>
+<td>NO</td>
+<td><span class="badge badge-virtual">VIRTUAL</span></td>
+<td><code>GENERATED ALWAYS AS (monto_total - monto_ejercido - monto_comprometido) <span class="badge badge-stored">STORED</span></code></td>
+<td>Saldo libre calculable e indexable.</td>
+</tr>
+<tr>
+<td><code>estado</code></td>
+<td><code>VARCHAR(20)</code></td>
+<td>NO</td>
+<td><code>'borrador'</code></td>
+<td><code>CHECK (estado IN ('borrador','en_revision','aprobado','rechazado','ejecutando','cerrado'))</code></td>
+<td>Fase en el ciclo de vida contable.</td>
+</tr>
+<tr>
+<td><code>creado_por</code></td>
+<td><code>BIGINT UNSIGNED</code></td>
+<td>SÍ</td>
+<td>NULL</td>
+<td><code><span class="badge badge-fk">FK</span> users(id) ON DELETE RESTRICT</code></td>
+<td>Usuario que capturó el anteproyecto.</td>
+</tr>
+<tr>
+<td><code>aprobado_por</code></td>
+<td><code>BIGINT UNSIGNED</code></td>
+<td>SÍ</td>
+<td>NULL</td>
+<td><code><span class="badge badge-fk">FK</span> users(id) ON DELETE RESTRICT</code></td>
+<td>Funcionario facultado que autorizó.</td>
+</tr>
+<tr>
+<td><code>aprobado_en</code></td>
+<td><code>TIMESTAMP</code></td>
+<td>SÍ</td>
+<td>NULL</td>
+<td>-</td>
+<td>Momento de la aprobación.</td>
+</tr>
+<tr>
+<td><code>notas</code></td>
+<td><code>TEXT</code></td>
+<td>SÍ</td>
+<td>NULL</td>
+<td>-</td>
+<td>Justificaciones o decretos presupuestales.</td>
+</tr>
+<tr>
+<td><code>created_at</code></td>
+<td><code>TIMESTAMP</code></td>
+<td>SÍ</td>
+<td><code>CURRENT_TIMESTAMP</code></td>
+<td>-</td>
+<td>Creación.</td>
+</tr>
+<tr>
+<td><code>updated_at</code></td>
+<td><code>TIMESTAMP</code></td>
+<td>SÍ</td>
+<td><code>CURRENT_TIMESTAMP ON UPDATE</code></td>
+<td>-</td>
+<td>Modificación.</td>
+</tr>
+</tbody></table></div>
+<ul><li><strong>Restricción Contable de No Sobregiro:</strong></li><li><code>CONSTRAINT ck_pres_montos CHECK (monto_total>=0 AND monto_ejercido>=0 AND monto_comprometido>=0 AND monto_ejercido+monto_comprometido<=monto_total)</code></li><li><strong>Índices:</strong></li><li><code>UNIQUE KEY uq_presupuesto_depto_periodo (departamento_id, periodo_fiscal_id)</code></li><li><code>INDEX idx_pres_depto_periodo_estado (departamento_id, periodo_fiscal_id, estado)</code></li></ul>
+<hr/>
+<h3>2.12 Tabla: <code>partidas_presupuestales</code></h3>
+<p><strong>Descripción:</strong> Desglose del presupuesto asignado a cada cuenta de gasto operativo específica.</p>
+<div class="table-container"><table><thead><tr>
+<th>Columna</th>
+<th>Tipo de Dato</th>
+<th>Nulo</th>
+<th>Default</th>
+<th>Restricciones / Claves</th>
+<th>Descripción</th>
+</tr></thead><tbody>
+<tr>
+<td><code>id</code></td>
+<td><code>BIGINT UNSIGNED</code></td>
+<td>NO</td>
+<td>Auto</td>
+<td><code><span class="badge badge-pk">PRIMARY KEY</span></code></td>
+<td>Identificador de la partida.</td>
+</tr>
+<tr>
+<td><code>presupuesto_id</code></td>
+<td><code>BIGINT UNSIGNED</code></td>
+<td>NO</td>
+<td>-</td>
+<td><code><span class="badge badge-fk">FK</span> presupuestos(id) ON DELETE RESTRICT</code></td>
+<td>Presupuesto matriz.</td>
+</tr>
+<tr>
+<td><code>categoria_opex_id</code></td>
+<td><code>BIGINT UNSIGNED</code></td>
+<td>NO</td>
+<td>-</td>
+<td><code><span class="badge badge-fk">FK</span> categorias_opex(id) ON DELETE RESTRICT</code></td>
+<td>Cuenta contable OPEX asignada.</td>
+</tr>
+<tr>
+<td><code>monto_asignado</code></td>
+<td><code>DECIMAL(15,2)</code></td>
+<td>NO</td>
+<td>-</td>
+<td><code>CHECK (monto_asignado >= 0.01)</code></td>
+<td>Techo autorizado para este concepto.</td>
+</tr>
+<tr>
+<td><code>monto_ejercido</code></td>
+<td><code>DECIMAL(15,2)</code></td>
+<td>NO</td>
+<td><code>0.00</code></td>
+<td><code>CHECK (monto_ejercido >= 0)</code></td>
+<td>Gasto devengado en esta partida.</td>
+</tr>
+<tr>
+<td><code>monto_comprometido</code></td>
+<td><code>DECIMAL(15,2)</code></td>
+<td>NO</td>
+<td><code>0.00</code></td>
+<td><code>CHECK (monto_comprometido >= 0)</code></td>
+<td>Reservas activas en esta partida.</td>
+</tr>
+<tr>
+<td><code>monto_disponible</code></td>
+<td><code>DECIMAL(15,2)</code></td>
+<td>NO</td>
+<td><span class="badge badge-virtual">VIRTUAL</span></td>
+<td><code>GENERATED ALWAYS AS (monto_asignado - monto_ejercido - monto_comprometido) <span class="badge badge-stored">STORED</span></code></td>
+<td>Saldo disponible en esta partida.</td>
+</tr>
+<tr>
+<td><code>created_at</code></td>
+<td><code>TIMESTAMP</code></td>
+<td>SÍ</td>
+<td><code>CURRENT_TIMESTAMP</code></td>
+<td>-</td>
+<td>Creación.</td>
+</tr>
+<tr>
+<td><code>updated_at</code></td>
+<td><code>TIMESTAMP</code></td>
+<td>SÍ</td>
+<td><code>CURRENT_TIMESTAMP ON UPDATE</code></td>
+<td>-</td>
+<td>Modificación.</td>
+</tr>
+</tbody></table></div>
+<ul><li><strong>Restricción de No Sobregiro:</strong></li><li><code>CONSTRAINT ck_partida_montos CHECK (monto_asignado>=0.01 AND monto_ejercido>=0 AND monto_comprometido>=0 AND monto_ejercido+monto_comprometido<=monto_asignado)</code></li><li><strong>Índices:</strong></li><li><code>UNIQUE KEY uq_partida_pres_categoria (presupuesto_id, categoria_opex_id)</code></li></ul>
+<hr/>
+<h3>2.13 Tabla: <code>compromisos_reserva</code></h3>
+<p><strong>Descripción:</strong> Registra las reservas de saldo preventivas sobre partidas presupuestales para licitaciones, órdenes de compra o contratos en trámite.</p>
+<div class="table-container"><table><thead><tr>
+<th>Columna</th>
+<th>Tipo de Dato</th>
+<th>Nulo</th>
+<th>Default</th>
+<th>Restricciones / Claves</th>
+<th>Descripción</th>
+</tr></thead><tbody>
+<tr>
+<td><code>id</code></td>
+<td><code>BIGINT UNSIGNED</code></td>
+<td>NO</td>
+<td>Auto</td>
+<td><code><span class="badge badge-pk">PRIMARY KEY</span></code></td>
+<td>Identificador único de reserva.</td>
+</tr>
+<tr>
+<td><code>partida_id</code></td>
+<td><code>BIGINT UNSIGNED</code></td>
+<td>NO</td>
+<td>-</td>
+<td><code><span class="badge badge-fk">FK</span> partidas_presupuestales(id) ON DELETE RESTRICT</code></td>
+<td>Partida presupuestal sobre la que se aparta saldo.</td>
+</tr>
+<tr>
+<td><code>creado_por</code></td>
+<td><code>BIGINT UNSIGNED</code></td>
+<td>NO</td>
+<td>-</td>
+<td><code><span class="badge badge-fk">FK</span> users(id) ON DELETE RESTRICT</code></td>
+<td>Usuario solicitante de la reserva.</td>
+</tr>
+<tr>
+<td><code>referencia_documento</code></td>
+<td><code>VARCHAR(255)</code></td>
+<td>NO</td>
+<td>-</td>
+<td>-</td>
+<td>Requisición, orden de compra o folio de adjudicación.</td>
+</tr>
+<tr>
+<td><code>monto_original</code></td>
+<td><code>DECIMAL(15,2)</code></td>
+<td>NO</td>
+<td>-</td>
+<td><code>CHECK (monto_original >= 0.01)</code></td>
+<td>Saldo total inicialmente apartado.</td>
+</tr>
+<tr>
+<td><code>monto_liberado</code></td>
+<td><code>DECIMAL(15,2)</code></td>
+<td>NO</td>
+<td><code>0.00</code></td>
+<td><code>CHECK (monto_liberado >= 0 AND <= monto_original)</code></td>
+<td>Saldo no consumido reintegrado a la partida.</td>
+</tr>
+<tr>
+<td><code>estado</code></td>
+<td><code>VARCHAR(15)</code></td>
+<td>NO</td>
+<td><code>'activa'</code></td>
+<td><code>CHECK (estado IN ('activa','cerrada','cancelada'))</code></td>
+<td>Estado de la reserva.</td>
+</tr>
+<tr>
+<td><code>created_at</code></td>
+<td><code>TIMESTAMP</code></td>
+<td>SÍ</td>
+<td><code>CURRENT_TIMESTAMP</code></td>
+<td>-</td>
+<td>Creación.</td>
+</tr>
+<tr>
+<td><code>updated_at</code></td>
+<td><code>TIMESTAMP</code></td>
+<td>SÍ</td>
+<td><code>CURRENT_TIMESTAMP ON UPDATE</code></td>
+<td>-</td>
+<td>Modificación.</td>
+</tr>
+</tbody></table></div>
+<ul><li><strong>Índices:</strong></li><li><code><span class="badge badge-pk">PRIMARY KEY</span> (id)</code></li><li><code>UNIQUE KEY uq_reserva_id_partida (id, partida_id)</code></li><li><code>INDEX idx_reserva_partida_estado (partida_id, estado)</code></li></ul>
+<hr/>
+<h3>2.14 Tabla: <code>gastos_operativos</code></h3>
+<p><strong>Descripción:</strong> Registro transaccional de hechos económicos devengados con vinculación obligatoria a una partida y opcional a una reserva previa.</p>
+<div class="table-container"><table><thead><tr>
+<th>Columna</th>
+<th>Tipo de Dato</th>
+<th>Nulo</th>
+<th>Default</th>
+<th>Restricciones / Claves</th>
+<th>Descripción</th>
+</tr></thead><tbody>
+<tr>
+<td><code>id</code></td>
+<td><code>BIGINT UNSIGNED</code></td>
+<td>NO</td>
+<td>Auto</td>
+<td><code><span class="badge badge-pk">PRIMARY KEY</span></code></td>
+<td>Identificador único del gasto.</td>
+</tr>
+<tr>
+<td><code>partida_id</code></td>
+<td><code>BIGINT UNSIGNED</code></td>
+<td>NO</td>
+<td>-</td>
+<td><code><span class="badge badge-fk">FK</span> partidas_presupuestales(id) ON DELETE RESTRICT</code></td>
+<td>Partida afectada.</td>
+</tr>
+<tr>
+<td><code>registrado_por</code></td>
+<td><code>BIGINT UNSIGNED</code></td>
+<td>SÍ</td>
+<td>NULL</td>
+<td><code><span class="badge badge-fk">FK</span> users(id) ON DELETE RESTRICT</code></td>
+<td>Usuario que capturó la transacción.</td>
+</tr>
+<tr>
+<td><code>compromiso_id</code></td>
+<td><code>BIGINT UNSIGNED</code></td>
+<td>SÍ</td>
+<td>NULL</td>
+<td><code><span class="badge badge-fk">FK</span> (compromiso_id, partida_id) REFERENCES compromisos_reserva(id, partida_id) ON DELETE RESTRICT</code></td>
+<td>Reserva previa vinculada (validación estricta de partida).</td>
+</tr>
+<tr>
+<td><code>monto</code></td>
+<td><code>DECIMAL(15,2)</code></td>
+<td>NO</td>
+<td>-</td>
+<td><code>CHECK (monto >= 0.01)</code></td>
+<td>Importe total ejercido de la transacción.</td>
+</tr>
+<tr>
+<td><code>concepto</code></td>
+<td><code>VARCHAR(255)</code></td>
+<td>NO</td>
+<td>-</td>
+<td>-</td>
+<td>Objeto del gasto (factura, servicio, insumo).</td>
+</tr>
+<tr>
+<td><code>referencia_documento</code></td>
+<td><code>VARCHAR(255)</code></td>
+<td>SÍ</td>
+<td>NULL</td>
+<td><code>INDEX idx_gasto_referencia</code></td>
+<td>UUID del CFDI / Folio de Factura.</td>
+</tr>
+<tr>
+<td><code>fecha_gasto</code></td>
+<td><code>DATE</code></td>
+<td>NO</td>
+<td>-</td>
+<td><code>INDEX idx_gasto_fecha_partida</code></td>
+<td>Fecha contable real de emisión o pago.</td>
+</tr>
+<tr>
+<td><code>fecha_registro</code></td>
+<td><code>DATE</code></td>
+<td>NO</td>
+<td>-</td>
+<td><code>INDEX idx_gasto_registro</code></td>
+<td>Fecha en la que se introdujo al sistema.</td>
+</tr>
+<tr>
+<td><code>metadata</code></td>
+<td><code>JSON</code></td>
+<td>SÍ</td>
+<td>NULL</td>
+<td>-</td>
+<td>Metadatos flexibles (proveedor, RFC emisor, UUID, retenciones).</td>
+</tr>
+<tr>
+<td><code>created_at</code></td>
+<td><code>TIMESTAMP</code></td>
+<td>SÍ</td>
+<td><code>CURRENT_TIMESTAMP</code></td>
+<td>-</td>
+<td>Creación.</td>
+</tr>
+<tr>
+<td><code>updated_at</code></td>
+<td><code>TIMESTAMP</code></td>
+<td>SÍ</td>
+<td><code>CURRENT_TIMESTAMP ON UPDATE</code></td>
+<td>-</td>
+<td>Modificación.</td>
+</tr>
+</tbody></table></div>
+<ul><li><strong>Índices Temporales de Alto Rendimiento:</strong></li><li><code>INDEX idx_gasto_fecha_partida (fecha_gasto, partida_id)</code></li><li><code>INDEX idx_gasto_registro (fecha_registro, partida_id)</code></li><li><code>INDEX idx_gasto_referencia (referencia_documento)</code></li></ul>
+<hr/>
+<h3>2.15 Tabla: <code>bitacora_eventos</code></h3>
+<p><strong>Descripción:</strong> Bitácora inmutable de auditoría forense para registrar cambios de estado y mutaciones en cualquier entidad del sistema.</p>
+<div class="table-container"><table><thead><tr>
+<th>Columna</th>
+<th>Tipo de Dato</th>
+<th>Nulo</th>
+<th>Default</th>
+<th>Restricciones / Claves</th>
+<th>Descripción</th>
+</tr></thead><tbody>
+<tr>
+<td><code>id</code></td>
+<td><code>BIGINT UNSIGNED</code></td>
+<td>NO</td>
+<td>Auto</td>
+<td><code><span class="badge badge-pk">PRIMARY KEY</span></code></td>
+<td>Identificador de log.</td>
+</tr>
+<tr>
+<td><code>actor_id</code></td>
+<td><code>BIGINT UNSIGNED</code></td>
+<td>SÍ</td>
+<td>NULL</td>
+<td><code><span class="badge badge-fk">FK</span> users(id) ON DELETE RESTRICT</code></td>
+<td>Usuario responsable del evento.</td>
+</tr>
+<tr>
+<td><code>entidad_tipo</code></td>
+<td><code>VARCHAR(40)</code></td>
+<td>NO</td>
+<td>-</td>
+<td><code>CHECK (entidad_tipo IN ('departamentos','periodos_fiscales','categorias_opex','users','roles','permisos','rol_permiso','user_rol','user_rol_categoria_restriccion','presupuestos','partidas_presupuestales','compromisos_reserva','gastos_operativos','modelos_predictivos','proyecciones_anuales'))</code></td>
+<td>Nombre de la tabla afectada.</td>
+</tr>
+<tr>
+<td><code>entidad_id</code></td>
+<td><code>BIGINT UNSIGNED</code></td>
+<td>NO</td>
+<td>-</td>
+<td><code>COMMENT 'Referencia lógica validada por servicio'</code></td>
+<td>ID del registro afectado.</td>
+</tr>
+<tr>
+<td><code>accion</code></td>
+<td><code>VARCHAR(40)</code></td>
+<td>NO</td>
+<td>-</td>
+<td>-</td>
+<td>Acción (<code>crear</code>, <code>actualizar</code>, <code>aprobar</code>, etc.).</td>
+</tr>
+<tr>
+<td><code>motivo</code></td>
+<td><code>VARCHAR(500)</code></td>
+<td>NO</td>
+<td>-</td>
+<td>-</td>
+<td>Causa o justificación administrativa.</td>
+</tr>
+<tr>
+<td><code>valores_antes</code></td>
+<td><code>JSON</code></td>
+<td>SÍ</td>
+<td>NULL</td>
+<td>-</td>
+<td>Datos serializados antes del cambio.</td>
+</tr>
+<tr>
+<td><code>valores_despues</code></td>
+<td><code>JSON</code></td>
+<td>SÍ</td>
+<td>NULL</td>
+<td>-</td>
+<td>Datos serializados tras el cambio.</td>
+</tr>
+<tr>
+<td><code>ocurrido_en</code></td>
+<td><code>TIMESTAMP</code></td>
+<td>NO</td>
+<td><code>CURRENT_TIMESTAMP</code></td>
+<td>-</td>
+<td>Marca de tiempo exacta del evento.</td>
+</tr>
+</tbody></table></div>
+<ul><li><strong>Índices:</strong></li><li><code>INDEX idx_evento_objetivo (entidad_tipo, entidad_id, ocurrido_en)</code></li><li><code>INDEX idx_evento_actor_fecha (actor_id, ocurrido_en)</code></li></ul>
+<hr/>
+<h3>2.16 Tabla: <code>modelos_predictivos</code></h3>
+<p><strong>Descripción:</strong> Registro de versiones y metadatos de modelos de Machine Learning utilizados para estimaciones presupuestales automáticas.</p>
+<div class="table-container"><table><thead><tr>
+<th>Columna</th>
+<th>Tipo de Dato</th>
+<th>Nulo</th>
+<th>Default</th>
+<th>Restricciones / Claves</th>
+<th>Descripción</th>
+</tr></thead><tbody>
+<tr>
+<td><code>id</code></td>
+<td><code>BIGINT UNSIGNED</code></td>
+<td>NO</td>
+<td>Auto</td>
+<td><code><span class="badge badge-pk">PRIMARY KEY</span></code></td>
+<td>Identificador del modelo.</td>
+</tr>
+<tr>
+<td><code>version</code></td>
+<td><code>VARCHAR(100)</code></td>
+<td>NO</td>
+<td>-</td>
+<td><code>UNIQUE (version)</code></td>
+<td>Identificador de versión (e.g. <code>v1.2.0-sarimax</code>).</td>
+</tr>
+<tr>
+<td><code>version_datos</code></td>
+<td><code>VARCHAR(255)</code></td>
+<td>NO</td>
+<td>-</td>
+<td>-</td>
+<td>Hash del dataset utilizado en entrenamiento.</td>
+</tr>
+<tr>
+<td><code>entrenamiento_desde</code></td>
+<td><code>DATE</code></td>
+<td>NO</td>
+<td>-</td>
+<td>-</td>
+<td>Inicio de ventana de entrenamiento.</td>
+</tr>
+<tr>
+<td><code>entrenamiento_hasta</code></td>
+<td><code>DATE</code></td>
+<td>NO</td>
+<td>-</td>
+<td>-</td>
+<td>Término de ventana de entrenamiento.</td>
+</tr>
+<tr>
+<td><code>validacion_desde</code></td>
+<td><code>DATE</code></td>
+<td>NO</td>
+<td>-</td>
+<td>-</td>
+<td>Inicio de ventana de prueba out-of-time.</td>
+</tr>
+<tr>
+<td><code>validacion_hasta</code></td>
+<td><code>DATE</code></td>
+<td>NO</td>
+<td>-</td>
+<td>-</td>
+<td>Término de ventana de validación.</td>
+</tr>
+<tr>
+<td><code>metricas_validacion</code></td>
+<td><code>JSON</code></td>
+<td>NO</td>
+<td>-</td>
+<td>-</td>
+<td>Métricas de precisión (<code>MAE</code>, <code>RMSE</code>, <code>MAPE</code>, $R^2$).</td>
+</tr>
+<tr>
+<td><code>referencia_artefacto</code></td>
+<td><code>VARCHAR(1024)</code></td>
+<td>NO</td>
+<td>-</td>
+<td>-</td>
+<td>Ruta o URI del binario entrenado (joblib / onnx / h5).</td>
+</tr>
+<tr>
+<td><code>created_at</code></td>
+<td><code>TIMESTAMP</code></td>
+<td>SÍ</td>
+<td><code>CURRENT_TIMESTAMP</code></td>
+<td>-</td>
+<td>Creación.</td>
+</tr>
+<tr>
+<td><code>updated_at</code></td>
+<td><code>TIMESTAMP</code></td>
+<td>SÍ</td>
+<td><code>CURRENT_TIMESTAMP ON UPDATE</code></td>
+<td>-</td>
+<td>Modificación.</td>
+</tr>
+</tbody></table></div>
+<ul><li><strong>Restricción de Ventanas Temporales:</strong></li><li><code>CONSTRAINT ck_modelo_fechas CHECK (entrenamiento_desde<=entrenamiento_hasta AND entrenamiento_hasta<validacion_desde AND validacion_desde<=validacion_hasta)</code></li></ul>
+<hr/>
+<h3>2.17 Tabla: <code>proyecciones_anuales</code></h3>
+<p><strong>Descripción:</strong> Estimaciones presupuestales generadas por modelos predictivos para departamentos en ejercicios futuros.</p>
+<div class="table-container"><table><thead><tr>
+<th>Columna</th>
+<th>Tipo de Dato</th>
+<th>Nulo</th>
+<th>Default</th>
+<th>Restricciones / Claves</th>
+<th>Descripción</th>
+</tr></thead><tbody>
+<tr>
+<td><code>id</code></td>
+<td><code>BIGINT UNSIGNED</code></td>
+<td>NO</td>
+<td>Auto</td>
+<td><code><span class="badge badge-pk">PRIMARY KEY</span></code></td>
+<td>Identificador de proyección.</td>
+</tr>
+<tr>
+<td><code>modelo_id</code></td>
+<td><code>BIGINT UNSIGNED</code></td>
+<td>NO</td>
+<td>-</td>
+<td><code><span class="badge badge-fk">FK</span> modelos_predictivos(id) ON DELETE RESTRICT</code></td>
+<td>Modelo generador.</td>
+</tr>
+<tr>
+<td><code>departamento_id</code></td>
+<td><code>BIGINT UNSIGNED</code></td>
+<td>NO</td>
+<td>-</td>
+<td><code><span class="badge badge-fk">FK</span> departamentos(id) ON DELETE RESTRICT</code></td>
+<td>Departamento evaluado.</td>
+</tr>
+<tr>
+<td><code>anio_base</code></td>
+<td><code>SMALLINT UNSIGNED</code></td>
+<td>NO</td>
+<td>-</td>
+<td><code>CHECK (anio_base BETWEEN 1900 AND 9998)</code></td>
+<td>Año histórico de referencia.</td>
+</tr>
+<tr>
+<td><code>anio_objetivo</code></td>
+<td><code>SMALLINT UNSIGNED</code></td>
+<td>NO</td>
+<td>-</td>
+<td><code>CHECK (anio_objetivo = anio_base + 1)</code></td>
+<td>Año pronosticado.</td>
+</tr>
+<tr>
+<td><code>fecha_corte_datos</code></td>
+<td><code>DATE</code></td>
+<td>NO</td>
+<td>-</td>
+<td>-</td>
+<td>Fecha de snapshot de datos utilizados.</td>
+</tr>
+<tr>
+<td><code>monto_proyectado</code></td>
+<td><code>DECIMAL(15,2)</code></td>
+<td>NO</td>
+<td>-</td>
+<td><code>CHECK (monto_proyectado >= 0)</code></td>
+<td>Presupuesto anual estimado.</td>
+</tr>
+<tr>
+<td><code>generado_en</code></td>
+<td><code>TIMESTAMP</code></td>
+<td>NO</td>
+<td><code>CURRENT_TIMESTAMP</code></td>
+<td>-</td>
+<td>Momento de ejecución del pronóstico.</td>
+</tr>
+</tbody></table></div>
+<ul><li><strong>Índices:</strong></li><li><code>UNIQUE KEY uq_proyeccion_version_corte (modelo_id, departamento_id, anio_base, anio_objetivo, fecha_corte_datos)</code></li><li><code>INDEX idx_proyeccion_depto_anio (departamento_id, anio_objetivo)</code></li></ul>
+<hr/>
+<h3>2.18 Tabla: <code>agregaciones_temporales</code></h3>
+<p><strong>Descripción:</strong> Estructura analítica optimizada con claves compuestas virtuales para acelerar consultas multi-escala temporal en el Dashboard.</p>
+<div class="table-container"><table><thead><tr>
+<th>Columna</th>
+<th>Tipo de Dato</th>
+<th>Nulo</th>
+<th>Default</th>
+<th>Restricciones / Claves</th>
+<th>Descripción</th>
+</tr></thead><tbody>
+<tr>
+<td><code>id</code></td>
+<td><code>BIGINT UNSIGNED</code></td>
+<td>NO</td>
+<td>Auto</td>
+<td><code><span class="badge badge-pk">PRIMARY KEY</span></code></td>
+<td>Identificador de agregado.</td>
+</tr>
+<tr>
+<td><code>departamento_id</code></td>
+<td><code>BIGINT UNSIGNED</code></td>
+<td>NO</td>
+<td>-</td>
+<td><code><span class="badge badge-fk">FK</span> departamentos(id) ON DELETE RESTRICT</code></td>
+<td>Unidad departamental.</td>
+</tr>
+<tr>
+<td><code>categoria_opex_id</code></td>
+<td><code>BIGINT UNSIGNED</code></td>
+<td>SÍ</td>
+<td>NULL</td>
+<td><code><span class="badge badge-fk">FK</span> categorias_opex(id) ON DELETE RESTRICT</code></td>
+<td>Cuenta OPEX o NULL para nivel departamento.</td>
+</tr>
+<tr>
+<td><code>categoria_clave</code></td>
+<td><code>BIGINT UNSIGNED</code></td>
+<td>NO</td>
+<td><span class="badge badge-virtual">VIRTUAL</span></td>
+<td><code>GENERATED ALWAYS AS (COALESCE(categoria_opex_id,0)) <span class="badge badge-stored">STORED</span></code></td>
+<td>Clave normalizada para índice único con nulos.</td>
+</tr>
+<tr>
+<td><code>periodo_tipo</code></td>
+<td><code>VARCHAR(20)</code></td>
+<td>NO</td>
+<td>-</td>
+<td><code>CHECK (periodo_tipo IN ('diario','quincenal','mensual','trimestral','semestral','anual'))</code></td>
+<td>Escala temporal de consolidación.</td>
+</tr>
+<tr>
+<td><code>fecha_inicio</code></td>
+<td><code>DATE</code></td>
+<td>NO</td>
+<td>-</td>
+<td><code>CHECK (fecha_inicio <= fecha_fin)</code></td>
+<td>Fecha inicio del cubo temporal.</td>
+</tr>
+<tr>
+<td><code>fecha_fin</code></td>
+<td><code>DATE</code></td>
+<td>NO</td>
+<td>-</td>
+<td>-</td>
+<td>Fecha fin del cubo temporal.</td>
+</tr>
+<tr>
+<td><code>monto_total</code></td>
+<td><code>DECIMAL(15,2)</code></td>
+<td>NO</td>
+<td><code>0.00</code></td>
+<td><code>CHECK (monto_total >= 0)</code></td>
+<td>Suma acumulada de gastos en el periodo.</td>
+</tr>
+<tr>
+<td><code>monto_promedio</code></td>
+<td><code>DECIMAL(15,2)</code></td>
+<td>NO</td>
+<td><code>0.00</code></td>
+<td><code>CHECK (monto_promedio >= 0)</code></td>
+<td>Ticket promedio de las transacciones.</td>
+</tr>
+<tr>
+<td><code>variacion_porcentual</code></td>
+<td><code>DECIMAL(12,4)</code></td>
+<td>SÍ</td>
+<td>NULL</td>
+<td>-</td>
+<td>Delta de cambio porcentual vs. periodo anterior.</td>
+</tr>
+<tr>
+<td><code>cantidad_transacciones</code></td>
+<td><code>INT UNSIGNED</code></td>
+<td>NO</td>
+<td><code>0</code></td>
+<td>-</td>
+<td>Número total de gastos agrupados.</td>
+</tr>
+<tr>
+<td><code>desglose</code></td>
+<td><code>JSON</code></td>
+<td>SÍ</td>
+<td>NULL</td>
+<td>-</td>
+<td>Vector JSON con subtotales por proveedor / partida.</td>
+</tr>
+<tr>
+<td><code>created_at</code></td>
+<td><code>TIMESTAMP</code></td>
+<td>SÍ</td>
+<td><code>CURRENT_TIMESTAMP</code></td>
+<td>-</td>
+<td>Creación.</td>
+</tr>
+<tr>
+<td><code>updated_at</code></td>
+<td><code>TIMESTAMP</code></td>
+<td>SÍ</td>
+<td><code>CURRENT_TIMESTAMP ON UPDATE</code></td>
+<td>-</td>
+<td>Modificación.</td>
+</tr>
+</tbody></table></div>
+<ul><li><strong>Índices de Cobertura Analítica:</strong></li><li><code>UNIQUE KEY uq_agregacion_contexto (departamento_id, categoria_clave, periodo_tipo, fecha_inicio, fecha_fin)</code></li><li><code>INDEX idx_agg_tipo_inicio (periodo_tipo, fecha_inicio)</code></li></ul>
+<hr/>
+<h2>3. Especificación de Vistas de Conciliación y Comprobación</h2>
+<hr/>
+<h3>3.1 Vista: <code>v_reservas_conciliacion</code></h3>
+<ul><li><strong>Propósito:</strong> Audita el balance de compromisos y reservas contra los gastos efectivamente devengados, alertando si el saldo pendiente es negativo o si una reserva no activa mantiene saldo pendiente.</li><li><strong>Definición SQL:</strong></li></ul>
+<pre><code class="language-sql">CREATE VIEW v_reservas_conciliacion AS
+SELECT r.id AS compromiso_id, r.partida_id, r.estado, r.monto_original, r.monto_liberado,
+       COALESCE(g.ejercido,0) AS monto_ejercido,
+       r.monto_original - r.monto_liberado - COALESCE(g.ejercido,0) AS saldo_pendiente,
+       CASE WHEN r.monto_original - r.monto_liberado - COALESCE(g.ejercido,0) &lt; 0
+          OR (r.estado &lt;&gt; 'activa' AND r.monto_original - r.monto_liberado - COALESCE(g.ejercido,0) &lt;&gt; 0)
+          THEN 1 ELSE 0 END AS requiere_revision
+FROM compromisos_reserva r
+LEFT JOIN (SELECT compromiso_id, SUM(monto) AS ejercido FROM gastos_operativos
+           WHERE compromiso_id IS NOT NULL GROUP BY compromiso_id) g ON g.compromiso_id = r.id;</code></pre>
+<hr/>
+<h3>3.2 Vista: <code>v_partidas_conciliacion</code></h3>
+<ul><li><strong>Propósito:</strong> Verifica que los campos acumuladores <code>monto_ejercido</code> y <code>monto_comprometido</code> de la tabla <code>partidas_presupuestales</code> coincidan exactamente con la suma en tiempo real de <code>gastos_operativos</code> y <code>compromisos_reserva</code>.</li><li><strong>Definición SQL:</strong></li></ul>
+<pre><code class="language-sql">CREATE VIEW v_partidas_conciliacion AS
+SELECT p.id AS partida_id, p.presupuesto_id, p.monto_asignado, p.monto_ejercido, p.monto_comprometido,
+       COALESCE(g.ejercido,0) AS ejercido_segun_gastos,
+       COALESCE(r.pendiente,0) AS comprometido_segun_reservas,
+       p.monto_asignado - COALESCE(g.ejercido,0) - COALESCE(r.pendiente,0) AS disponible_segun_movimientos,
+       CASE WHEN p.monto_ejercido &lt;&gt; COALESCE(g.ejercido,0)
+         OR p.monto_comprometido &lt;&gt; COALESCE(r.pendiente,0) THEN 1 ELSE 0 END AS requiere_revision
+FROM partidas_presupuestales p
+LEFT JOIN (SELECT partida_id, SUM(monto) AS ejercido FROM gastos_operativos GROUP BY partida_id) g ON g.partida_id = p.id
+LEFT JOIN (SELECT partida_id, SUM(saldo_pendiente) AS pendiente FROM v_reservas_conciliacion GROUP BY partida_id) r ON r.partida_id = p.id;</code></pre>
+<hr/>
+<h3>3.3 Vista: <code>v_presupuestos_conciliacion</code></h3>
+<ul><li><strong>Propósito:</strong> Comprueba que la suma de los montos asignados, ejercidos y comprometidos de todas las partidas de un departamento sumen con exactitud el total declarado en la cabecera <code>presupuestos</code>.</li><li><strong>Definición SQL:</strong></li></ul>
+<pre><code class="language-sql">CREATE VIEW v_presupuestos_conciliacion AS
+SELECT p.id AS presupuesto_id, p.monto_total, p.monto_ejercido, p.monto_comprometido, p.monto_disponible,
+       COALESCE(d.asignado,0) AS total_segun_partidas,
+       COALESCE(d.ejercido,0) AS ejercido_segun_partidas,
+       COALESCE(d.comprometido,0) AS comprometido_segun_partidas,
+       CASE WHEN COALESCE(d.partidas,0) = 0 OR p.monto_total &lt;&gt; COALESCE(d.asignado,0)
+         OR p.monto_ejercido &lt;&gt; COALESCE(d.ejercido,0) OR p.monto_comprometido &lt;&gt; COALESCE(d.comprometido,0)
+         THEN 1 ELSE 0 END AS requiere_revision
+FROM presupuestos p
+LEFT JOIN (SELECT presupuesto_id, COUNT(*) AS partidas, SUM(monto_asignado) AS asignado,
+           SUM(monto_ejercido) AS ejercido, SUM(monto_comprometido) AS comprometido
+           FROM partidas_presupuestales GROUP BY presupuesto_id) d ON d.presupuesto_id = p.id;</code></pre>
+<hr/>
+<h2>4. Matriz Global de Relaciones y Claves Foráneas</h2>
+<div class="table-container"><table><thead><tr>
+<th>Tabla Origen</th>
+<th>Clave Foránea</th>
+<th>Tabla Destino</th>
+<th>Clave Primaria Destino</th>
+<th>Acción ON DELETE</th>
+<th>Cardinalidad</th>
+<th>Justificación de Negocio</th>
+</tr></thead><tbody>
+<tr>
+<td><code>departamentos</code></td>
+<td><code>departamento_padre_id</code></td>
+<td><code>departamentos</code></td>
+<td><code>id</code></td>
+<td><code>RESTRICT</code></td>
+<td>0..1 : N</td>
+<td>No se permite eliminar una dirección que contenga gerencias subordinadas.</td>
+</tr>
+<tr>
+<td><code>users</code></td>
+<td><code>departamento_id</code></td>
+<td><code>departamentos</code></td>
+<td><code>id</code></td>
+<td><code>RESTRICT</code></td>
+<td>0..1 : N</td>
+<td>Un departamento no puede eliminarse si cuenta con personal adscrito.</td>
+</tr>
+<tr>
+<td><code>categorias_opex</code></td>
+<td><code>categoria_padre_id</code></td>
+<td><code>categorias_opex</code></td>
+<td><code>id</code></td>
+<td><code>RESTRICT</code></td>
+<td>0..1 : N</td>
+<td>Protege la integridad de las cuentas contables dependientes.</td>
+</tr>
+<tr>
+<td><code>rol_permiso</code></td>
+<td><code>rol_id</code></td>
+<td><code>roles</code></td>
+<td><code>id</code></td>
+<td><code>RESTRICT</code></td>
+<td>1 : N</td>
+<td>Impide borrar roles sin desvincular sus privilegios.</td>
+</tr>
+<tr>
+<td><code>rol_permiso</code></td>
+<td><code>permiso_id</code></td>
+<td><code>permisos</code></td>
+<td><code>id</code></td>
+<td><code>RESTRICT</code></td>
+<td>1 : N</td>
+<td>Impide borrar permisos en uso.</td>
+</tr>
+<tr>
+<td><code>user_rol</code></td>
+<td><code>user_id</code></td>
+<td><code>users</code></td>
+<td><code>id</code></td>
+<td><code>RESTRICT</code></td>
+<td>1 : N</td>
+<td>Protección de historial de accesos por usuario.</td>
+</tr>
+<tr>
+<td><code>user_rol</code></td>
+<td><code>rol_id</code></td>
+<td><code>roles</code></td>
+<td><code>id</code></td>
+<td><code>RESTRICT</code></td>
+<td>1 : N</td>
+<td>Protección de asignaciones vigentes.</td>
+</tr>
+<tr>
+<td><code>user_rol</code></td>
+<td><code>departamento_id</code></td>
+<td><code>departamentos</code></td>
+<td><code>id</code></td>
+<td><code>RESTRICT</code></td>
+<td>0..1 : N</td>
+<td>Integridad de ámbito departamental.</td>
+</tr>
+<tr>
+<td><code>user_rol_categoria_restriccion</code></td>
+<td><code>user_rol_id</code></td>
+<td><code>user_rol</code></td>
+<td><code>id</code></td>
+<td><code>RESTRICT</code></td>
+<td>1 : N</td>
+<td>Integridad de la restricción del rol.</td>
+</tr>
+<tr>
+<td><code>user_rol_categoria_restriccion</code></td>
+<td><code>categoria_opex_id</code></td>
+<td><code>categorias_opex</code></td>
+<td><code>id</code></td>
+<td><code>RESTRICT</code></td>
+<td>1 : N</td>
+<td>Integridad de la cuenta OPEX restringida.</td>
+</tr>
+<tr>
+<td><code>historial_asignaciones</code></td>
+<td><code>user_id</code></td>
+<td><code>users</code></td>
+<td><code>id</code></td>
+<td><code>RESTRICT</code></td>
+<td>1 : N</td>
+<td>Trazabilidad forense inmutable de usuarios.</td>
+</tr>
+<tr>
+<td><code>historial_asignaciones</code></td>
+<td><code>rol_id</code></td>
+<td><code>roles</code></td>
+<td><code>id</code></td>
+<td><code>RESTRICT</code></td>
+<td>1 : N</td>
+<td>Trazabilidad forense inmutable de roles.</td>
+</tr>
+<tr>
+<td><code>historial_asignaciones</code></td>
+<td><code>ejecutado_por</code></td>
+<td><code>users</code></td>
+<td><code>id</code></td>
+<td><code>RESTRICT</code></td>
+<td>0..1 : N</td>
+<td>Registro de funcionario auditor.</td>
+</tr>
+<tr>
+<td><code>presupuestos</code></td>
+<td><code>departamento_id</code></td>
+<td><code>departamentos</code></td>
+<td><code>id</code></td>
+<td><code>RESTRICT</code></td>
+<td>1 : N</td>
+<td>Un departamento no puede eliminarse si tiene ejercicio presupuestal.</td>
+</tr>
+<tr>
+<td><code>presupuestos</code></td>
+<td><code>periodo_fiscal_id</code></td>
+<td><code>periodos_fiscales</code></td>
+<td><code>id</code></td>
+<td><code>RESTRICT</code></td>
+<td>1 : N</td>
+<td>Conserva la historia contable de ejercicios anteriores.</td>
+</tr>
+<tr>
+<td><code>presupuestos</code></td>
+<td><code>creado_por</code></td>
+<td><code>users</code></td>
+<td><code>id</code></td>
+<td><code>RESTRICT</code></td>
+<td>0..1 : N</td>
+<td>Auditoría de autoría de presupuestos.</td>
+</tr>
+<tr>
+<td><code>presupuestos</code></td>
+<td><code>aprobado_por</code></td>
+<td><code>users</code></td>
+<td><code>id</code></td>
+<td><code>RESTRICT</code></td>
+<td>0..1 : N</td>
+<td>Auditoría de autorización directiva.</td>
+</tr>
+<tr>
+<td><code>partidas_presupuestales</code></td>
+<td><code>presupuesto_id</code></td>
+<td><code>presupuestos</code></td>
+<td><code>id</code></td>
+<td><code>RESTRICT</code></td>
+<td>1 : N</td>
+<td>Ninguna partida existe sin un presupuesto matriz aprobado.</td>
+</tr>
+<tr>
+<td><code>partidas_presupuestales</code></td>
+<td><code>categoria_opex_id</code></td>
+<td><code>categorias_opex</code></td>
+<td><code>id</code></td>
+<td><code>RESTRICT</code></td>
+<td>1 : N</td>
+<td>No se puede eliminar una cuenta OPEX con partidas asignadas.</td>
+</tr>
+<tr>
+<td><code>compromisos_reserva</code></td>
+<td><code>partida_id</code></td>
+<td><code>partidas_presupuestales</code></td>
+<td><code>id</code></td>
+<td><code>RESTRICT</code></td>
+<td>1 : N</td>
+<td>Todo compromiso debe afectar a una partida existente.</td>
+</tr>
+<tr>
+<td><code>compromisos_reserva</code></td>
+<td><code>creado_por</code></td>
+<td><code>users</code></td>
+<td><code>id</code></td>
+<td><code>RESTRICT</code></td>
+<td>1 : N</td>
+<td>Responsable de la solicitud de reserva.</td>
+</tr>
+<tr>
+<td><code>gastos_operativos</code></td>
+<td><code>partida_id</code></td>
+<td><code>partidas_presupuestales</code></td>
+<td><code>id</code></td>
+<td><code>RESTRICT</code></td>
+<td>1 : N</td>
+<td>Todo gasto devengado requiere partida presupuestal válida.</td>
+</tr>
+<tr>
+<td><code>gastos_operativos</code></td>
+<td><code>registrado_por</code></td>
+<td><code>users</code></td>
+<td><code>id</code></td>
+<td><code>RESTRICT</code></td>
+<td>0..1 : N</td>
+<td>Identificación del capturista del gasto.</td>
+</tr>
+<tr>
+<td><code>gastos_operativos</code></td>
+<td><code>(compromiso_id, partida_id)</code></td>
+<td><code>compromisos_reserva</code></td>
+<td><code>(id, partida_id)</code></td>
+<td><code>RESTRICT</code></td>
+<td>0..1 : 1..N</td>
+<td><strong>Integridad Compuesta:</strong> Si se usa reserva, debe pertenecer a la misma partida.</td>
+</tr>
+<tr>
+<td><code>bitacora_eventos</code></td>
+<td><code>actor_id</code></td>
+<td><code>users</code></td>
+<td><code>id</code></td>
+<td><code>RESTRICT</code></td>
+<td>0..1 : N</td>
+<td>Responsable del evento de auditoría.</td>
+</tr>
+<tr>
+<td><code>proyecciones_anuales</code></td>
+<td><code>modelo_id</code></td>
+<td><code>modelos_predictivos</code></td>
+<td><code>id</code></td>
+<td><code>RESTRICT</code></td>
+<td>1 : N</td>
+<td>Trazabilidad del algoritmo predictivo que estimó el gasto.</td>
+</tr>
+<tr>
+<td><code>proyecciones_anuales</code></td>
+<td><code>departamento_id</code></td>
+<td><code>departamentos</code></td>
+<td><code>id</code></td>
+<td><code>RESTRICT</code></td>
+<td>1 : N</td>
+<td>Departamento al que aplica el pronóstico.</td>
+</tr>
+<tr>
+<td><code>agregaciones_temporales</code></td>
+<td><code>departamento_id</code></td>
+<td><code>departamentos</code></td>
+<td><code>id</code></td>
+<td><code>RESTRICT</code></td>
+<td>1 : N</td>
+<td>Departamento totalizado en la serie temporal.</td>
+</tr>
+<tr>
+<td><code>agregaciones_temporales</code></td>
+<td><code>categoria_opex_id</code></td>
+<td><code>categorias_opex</code></td>
+<td><code>id</code></td>
+<td><code>RESTRICT</code></td>
+<td>0..1 : N</td>
+<td>Cuenta OPEX totalizada o NULL (total departamental).</td>
+</tr>
+</tbody></table></div>
+<hr/>
+<p><em>Fin del Diccionario de Datos Oficial de <code>cecom_presupuestos_er</code> (Generado a partir de <code>CECOM_Base_de_Datos.sql</code>).</em></p>
+</body>
+</html>
