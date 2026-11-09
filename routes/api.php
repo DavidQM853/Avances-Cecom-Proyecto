@@ -60,6 +60,12 @@ Route::prefix('v1')->group(function () {
         Route::delete('gastos/{gasto}', [\App\Http\Controllers\Api\V1\GastoOperativoController::class, 'destroy'])
             ->middleware('opex.permission');
 
+        // Compromisos y Reservas Presupuestales
+        Route::get('compromisos', [\App\Http\Controllers\Api\V1\CompromisoReservaController::class, 'index']);
+        Route::post('compromisos', [\App\Http\Controllers\Api\V1\CompromisoReservaController::class, 'store'])
+            ->middleware('opex.permission');
+        Route::patch('compromisos/{compromiso}/liberar', [\App\Http\Controllers\Api\V1\CompromisoReservaController::class, 'liberar']);
+
         // Agregaciones y Filtros Temporales
         Route::prefix('agregaciones')->group(function () {
             Route::get('/', [\App\Http\Controllers\Api\V1\ReporteController::class, 'agregaciones']);
@@ -74,10 +80,12 @@ Route::prefix('v1')->group(function () {
             Route::get('/kpis', [\App\Http\Controllers\Api\V1\DashboardController::class, 'kpis']);
         });
 
-        // Reportes
+        // Reportes, Conciliación y Proyecciones Predictivas
         Route::prefix('reportes')->group(function () {
             Route::get('/ejecucion', [\App\Http\Controllers\Api\V1\ReporteController::class, 'ejecucion']);
             Route::get('/variabilidad-mensual', [\App\Http\Controllers\Api\V1\ReporteController::class, 'variabilidadMensual']);
+            Route::get('/conciliacion', [\App\Http\Controllers\Api\V1\ReporteController::class, 'conciliacion']);
+            Route::get('/proyecciones', [\App\Http\Controllers\Api\V1\ReporteController::class, 'proyecciones']);
         });
 
         // Roles y Permisos (gestión restringida por CheckRole)

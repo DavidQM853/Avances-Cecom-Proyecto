@@ -1,0 +1,140 @@
+openapi: 3.0.3
+info:
+  title: Dashboard Presupuestos CECOM — API REST v1
+  version: 1.0.0
+  description: >-
+    Especificación OpenAPI 3.0 del backend en Laravel 13 conectado a la base de datos
+    relacional cecom_presupuestos_er. Incluye agregaciones temporales (diaria a anual),
+    comparativa YoY, reservas presupuestales, vistas de conciliación y motor de roles dinámicos.
+servers:
+  - url: http://localhost:8000/api/v1
+    description: Servidor Local de Desarrollo
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: Sanctum
+security:
+  - bearerAuth: []
+paths:
+  /auth/login:
+    post:
+      tags: [Autenticación]
+      summary: Iniciar sesión y obtener token Bearer de Sanctum
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email: { type: string, format: email, example: admin@cecom.gob.mx }
+                password: { type: string, example: password }
+      responses:
+        '200':
+          description: Autenticación exitosa con roles, restricciones OPEX y permisos efectivos
+  /agregaciones:
+    get:
+      tags: [Agregaciones Temporales]
+      summary: Consulta agregada por período (diario, quincenal, mensual, trimestral, semestral, anual)
+      parameters:
+        - in: query
+          name: periodo
+          required: true
+          schema:
+            type: string
+            enum: [diario, quincenal, mensual, trimestral, semestral, anual]
+        - in: query
+          name: desde
+          required: true
+          schema: { type: string, format: date, example: '2025-01-01' }
+        - in: query
+          name: hasta
+          required: true
+          schema: { type: string, format: date, example: '2025-12-31' }
+        - in: query
+          name: departamento_id
+          schema: { type: integer }
+        - in: query
+          name: categoria_opex_id
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Serie temporal con totales, promedios, deltas y desglose por categoría OPEX
+  /presupuestos-yoy/comparativa:
+    get:
+      tags: [Presupuestos]
+      summary: Comparativa Year-over-Year (YoY) interdepartamental
+      parameters:
+        - in: query
+          name: anio_base
+          required: true
+          schema: { type: integer, example: 2024 }
+        - in: query
+          name: anio_comparar
+          required: true
+          schema: { type: integer, example: 2025 }
+      responses:
+        '200':
+          description: Comparativa anual con deltas absolutos, variación porcentual y desglose OPEX
+  /gastos:
+    get:
+      tags: [Gastos Operativos]
+      summary: Listado paginado de gastos operativos con filtros
+      responses:
+        '200':
+          description: Página de gastos operativos
+    post:
+      tags: [Gastos Operativos]
+      summary: Registrar gasto operativo (protegido por middleware CheckOpexPermission)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [partida_id, monto, concepto, fecha_gasto]
+              properties:
+                partida_id: { type: integer, example: 1 }
+                compromiso_id: { type: integer, nullable: true }
+                monto: { type: number, format: float, example: 12500.00 }
+                concepto: { type: string, example: Renovación Licencias Cloud }
+                referencia_documento: { type: string, example: FAC-2026-9910 }
+                fecha_gasto: { type: string, format: date, example: '2026-08-15' }
+      responses:
+        '201': { description: Gasto registrado y conciliado en partida y presupuesto }
+        '403': { description: Bloqueado por restricción dinámica en user_rol_categoria_restriccion }
+        '422': { description: Fondos disponibles insuficientes en la partida }
+  /compromisos:
+    get:
+      tags: [Compromisos y Reservas]
+      summary: Listar compromisos y reservas presupuestales
+      responses:
+        '200': { description: Listado de reservas }
+    post:
+      tags: [Compromisos y Reservas]
+      summary: Crear compromiso/reserva presupuestal sobre una partida
+      responses:
+        '201': { description: Reserva creada y saldo comprometido actualizado }
+  /reportes/conciliacion:
+    get:
+      tags: [Reportes y Auditoría]
+      summary: Estado de las vistas v_presupuestos_conciliacion, v_partidas_conciliacion y v_reservas_conciliacion
+      responses:
+        '200': { description: Resumen de conciliación contable }
+  /reportes/proyecciones:
+    get:
+      tags: [Reportes y Auditoría]
+      summary: Proyecciones presupuestales anuales generadas por modelos predictivos
+      responses:
+        '200': { description: Listado de proyecciones anuales }
+  /monitor/latencia:
+    get:
+      tags: [Monitoreo]
+      summary: Telemetría de latencia de base de datos en tiempo real
+      security: []
+      responses:
+        '200': { description: Métricas de latencia en milisegundos }

@@ -140,3 +140,4 @@ return new class extends Migration
         Schema::dropIfExists('bitacora_eventos');
     }
 };
+

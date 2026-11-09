@@ -6,9 +6,11 @@ use App\Enums\PeriodoTipo;
 use App\Http\Controllers\Controller;
 use App\Models\Departamento;
 use App\Models\Presupuesto;
+use App\Models\ProyeccionAnual;
 use App\Services\AgregacionTemporalService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class ReporteController extends Controller
 {
@@ -27,18 +29,21 @@ class ReporteController extends Controller
             'hasta' => 'required|date|after_or_equal:desde',
             'departamento_id' => 'nullable|exists:departamentos,id',
             'categoria_opex_id' => 'nullable|exists:categorias_opex,id',
+            'usar_precalculado' => 'nullable|boolean',
         ]);
 
         $periodo = PeriodoTipo::from($request->periodo);
         $departamentoId = $request->filled('departamento_id') ? $request->integer('departamento_id') : null;
         $categoriaOpexId = $request->filled('categoria_opex_id') ? $request->integer('categoria_opex_id') : null;
+        $usarPrecalculado = $request->boolean('usar_precalculado', false);
 
         $datos = $this->agregacionService->calcular(
             $periodo,
             $request->desde,
             $request->hasta,
             $departamentoId,
-            $categoriaOpexId
+            $categoriaOpexId,
+            $usarPrecalculado
         );
 
         return response()->json([
@@ -51,11 +56,11 @@ class ReporteController extends Controller
                 'categoria_opex_id' => $categoriaOpexId,
             ],
             'resumen' => [
-                'total_general' => round((float)$datos->sum('monto_total'), 2),
+                'total_general' => round((float) $datos->sum('monto_total'), 2),
                 'total_transacciones' => $datos->sum('cantidad_transacciones'),
                 'total_periodos' => $datos->count(),
                 'promedio_por_periodo' => $datos->count() > 0
-                    ? round((float)$datos->sum('monto_total') / $datos->count(), 2)
+                    ? round((float) $datos->sum('monto_total') / $datos->count(), 2)
                     : 0.0,
             ],
             'serie_temporal' => $datos,
@@ -160,6 +165,51 @@ class ReporteController extends Controller
                     : 0.0,
             ],
             'departamentos' => $reporte,
+        ]);
+    }
+
+    /**
+     * Consulta de las 3 vistas de conciliación de cecom_presupuestos_er:
+     * v_presupuestos_conciliacion, v_partidas_conciliacion y v_reservas_conciliacion.
+     */
+    public function conciliacion(): JsonResponse
+    {
+        $presupuestos = DB::table('v_presupuestos_conciliacion')->get();
+        $partidas = DB::table('v_partidas_conciliacion')->get();
+        $reservas = DB::table('v_reservas_conciliacion')->get();
+
+        return response()->json([
+            'resumen' => [
+                'presupuestos_descuadrados' => $presupuestos->where('requiere_revision', 1)->count(),
+                'partidas_descuadradas' => $partidas->where('requiere_revision', 1)->count(),
+                'reservas_descuadradas' => $reservas->where('requiere_revision', 1)->count(),
+            ],
+            'presupuestos' => $presupuestos,
+            'partidas' => $partidas,
+            'reservas' => $reservas,
+        ]);
+    }
+
+    /**
+     * Consulta de proyecciones presupuestales anuales y métricas del modelo predictivo.
+     */
+    public function proyecciones(Request $request): JsonResponse
+    {
+        $query = ProyeccionAnual::with([
+            'modelo:id,version,version_datos,metricas_validacion',
+            'departamento:id,nombre,codigo',
+        ]);
+
+        if ($request->filled('anio_objetivo')) {
+            $query->where('anio_objetivo', $request->integer('anio_objetivo'));
+        }
+
+        if ($request->filled('departamento_id')) {
+            $query->where('departamento_id', $request->integer('departamento_id'));
+        }
+
+        return response()->json([
+            'data' => $query->orderBy('anio_objetivo')->get(),
         ]);
     }
 }
