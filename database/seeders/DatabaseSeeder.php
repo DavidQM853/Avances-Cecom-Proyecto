@@ -34,12 +34,14 @@ class DatabaseSeeder extends Seeder
             'departamento_id' => 1, // Dirección General
         ]);
 
-        // Asignar rol de administrador
+        // Asignar rol de administrador con alcance_global=true y departamento_id=null (cumple ck_ur_alcance)
         $admin->roles()->attach(1, [
+            'departamento_id' => null,
+            'alcance_global' => true,
             'activo' => true,
         ]);
 
-        // 6. Generar datos históricos (presupuestos, partidas, gastos 2024-2026)
+        // 6. Generar datos históricos (presupuestos, partidas, reservas, gastos 2024-2026)
         $this->call(DatosHistoricosSeeder::class);
     }
 }

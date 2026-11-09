@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
+use App\Models\BitacoraEvento;
+use App\Models\CompromisoReserva;
 use App\Models\GastoOperativo;
 use App\Models\PartidaPresupuestal;
 use Illuminate\Http\JsonResponse;
@@ -20,6 +22,7 @@ class GastoOperativoController extends Controller
             'partida.categoriaOpex:id,nombre,codigo,tipo_gasto',
             'partida.presupuesto.departamento:id,nombre,codigo',
             'registradoPor:id,name,email',
+            'compromiso:id,partida_id,referencia_documento,estado',
         ]);
 
         if ($request->filled('desde')) {
@@ -56,6 +59,7 @@ class GastoOperativoController extends Controller
             'partida.categoriaOpex',
             'partida.presupuesto.departamento',
             'registradoPor:id,name,email',
+            'compromiso',
         ]);
 
         return response()->json([
@@ -64,15 +68,16 @@ class GastoOperativoController extends Controller
     }
 
     /**
-     * Registrar un nuevo gasto operativo y conciliar fondos de la partida.
+     * Registrar un nuevo gasto operativo y conciliar fondos de la partida y reserva.
      */
     public function store(Request $request): JsonResponse
     {
         $validated = $request->validate([
             'partida_id' => 'required|exists:partidas_presupuestales,id',
+            'compromiso_id' => 'nullable|exists:compromisos_reserva,id',
             'monto' => 'required|numeric|min:0.01',
             'concepto' => 'required|string|max:255',
-            'referencia_documento' => 'nullable|string|max:100',
+            'referencia_documento' => 'nullable|string|max:255',
             'fecha_gasto' => 'required|date',
             'metadata' => 'nullable|array',
         ]);
@@ -87,8 +92,21 @@ class GastoOperativoController extends Controller
                 ], 422);
             }
 
+            // Si está vinculado a una reserva (compromiso_id), validar FK compuesta (misma partida)
+            if (!empty($validated['compromiso_id'])) {
+                $reserva = CompromisoReserva::where('id', $validated['compromiso_id'])
+                    ->where('partida_id', $partida->id)
+                    ->first();
+
+                if (!$reserva) {
+                    return response()->json([
+                        'message' => 'El compromiso o reserva seleccionado no pertenece a la partida presupuestal indicada.',
+                    ], 422);
+                }
+            }
+
             // Validar suficiencia presupuestal
-            if (!$partida->tieneFondos((float)$validated['monto'])) {
+            if (!$partida->tieneFondos((float) $validated['monto'])) {
                 return response()->json([
                     'message' => "Fondos insuficientes en la partida. Disponible: $ {$partida->monto_disponible}, Solicitado: $ {$validated['monto']}",
                 ], 422);
@@ -97,6 +115,7 @@ class GastoOperativoController extends Controller
             $gasto = GastoOperativo::create([
                 'partida_id' => $validated['partida_id'],
                 'registrado_por' => $request->user()->id,
+                'compromiso_id' => $validated['compromiso_id'] ?? null,
                 'monto' => $validated['monto'],
                 'concepto' => $validated['concepto'],
                 'referencia_documento' => $validated['referencia_documento'] ?? null,
@@ -108,6 +127,20 @@ class GastoOperativoController extends Controller
             // Actualizar montos ejercidos
             $partida->increment('monto_ejercido', $validated['monto']);
             $partida->presupuesto->increment('monto_ejercido', $validated['monto']);
+
+            // Registrar en bitácora de auditoría
+            BitacoraEvento::create([
+                'actor_id' => $request->user()->id,
+                'entidad_tipo' => 'gastos_operativos',
+                'entidad_id' => $gasto->id,
+                'accion' => 'crear',
+                'motivo' => "Registro de gasto operativo: {$gasto->concepto}",
+                'valores_despues' => [
+                    'partida_id' => $gasto->partida_id,
+                    'monto' => (float) $gasto->monto,
+                    'fecha_gasto' => $validated['fecha_gasto'],
+                ],
+            ]);
 
             return response()->json([
                 'message' => 'Gasto operativo registrado exitosamente',
@@ -124,21 +157,21 @@ class GastoOperativoController extends Controller
         $validated = $request->validate([
             'monto' => 'sometimes|required|numeric|min:0.01',
             'concepto' => 'sometimes|required|string|max:255',
-            'referencia_documento' => 'nullable|string|max:100',
+            'referencia_documento' => 'nullable|string|max:255',
             'fecha_gasto' => 'sometimes|required|date',
             'metadata' => 'nullable|array',
         ]);
 
-        return DB::transaction(function () use ($validated, $gasto) {
-            $diferenciaMonto = 0;
+        return DB::transaction(function () use ($validated, $gasto, $request) {
+            $montoAnterior = (float) $gasto->monto;
 
             if (isset($validated['monto'])) {
-                $diferenciaMonto = $validated['monto'] - $gasto->monto;
+                $diferenciaMonto = $validated['monto'] - $montoAnterior;
                 $partida = $gasto->partida()->lockForUpdate()->first();
 
                 if ($diferenciaMonto > 0 && !$partida->tieneFondos($diferenciaMonto)) {
                     return response()->json([
-                        'message' => "Fondos insuficientes para el incremento solicitado.",
+                        'message' => 'Fondos insuficientes para el incremento solicitado.',
                     ], 422);
                 }
 
@@ -147,6 +180,16 @@ class GastoOperativoController extends Controller
             }
 
             $gasto->update($validated);
+
+            BitacoraEvento::create([
+                'actor_id' => $request->user()?->id,
+                'entidad_tipo' => 'gastos_operativos',
+                'entidad_id' => $gasto->id,
+                'accion' => 'actualizar',
+                'motivo' => 'Actualización de gasto operativo y conciliación de saldos',
+                'valores_antes' => ['monto' => $montoAnterior],
+                'valores_despues' => ['monto' => (float) $gasto->monto],
+            ]);
 
             return response()->json([
                 'message' => 'Gasto operativo actualizado exitosamente',
@@ -158,16 +201,26 @@ class GastoOperativoController extends Controller
     /**
      * Eliminar un gasto y reintegrar monto al presupuesto.
      */
-    public function destroy(GastoOperativo $gasto): JsonResponse
+    public function destroy(Request $request, GastoOperativo $gasto): JsonResponse
     {
-        return DB::transaction(function () use ($gasto) {
-            $monto = $gasto->monto;
+        return DB::transaction(function () use ($gasto, $request) {
+            $monto = (float) $gasto->monto;
+            $gastoId = $gasto->id;
             $partida = $gasto->partida()->lockForUpdate()->first();
 
             $gasto->delete();
 
             $partida->decrement('monto_ejercido', $monto);
             $partida->presupuesto->decrement('monto_ejercido', $monto);
+
+            BitacoraEvento::create([
+                'actor_id' => $request->user()?->id,
+                'entidad_tipo' => 'gastos_operativos',
+                'entidad_id' => $gastoId,
+                'accion' => 'eliminar',
+                'motivo' => 'Eliminación de gasto operativo y reintegro de saldo a la partida',
+                'valores_antes' => ['monto' => $monto, 'partida_id' => $partida->id],
+            ]);
 
             return response()->json([
                 'message' => 'Gasto operativo eliminado y saldo reintegrado al presupuesto',

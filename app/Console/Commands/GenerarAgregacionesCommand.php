@@ -53,14 +53,16 @@ class GenerarAgregacionesCommand extends Command
                 $calculos = $service->calcular($periodo, $desde, $hasta, $depto->id);
 
                 foreach ($calculos as $c) {
+                    // Alineado con uq_agregacion_contexto (departamento_id, categoria_clave, periodo_tipo, fecha_inicio, fecha_fin)
                     AgregacionTemporal::updateOrCreate(
                         [
                             'departamento_id' => $depto->id,
+                            'categoria_opex_id' => null,
                             'periodo_tipo' => $periodo,
                             'fecha_inicio' => $c['fecha_inicio'],
+                            'fecha_fin' => $c['fecha_fin'],
                         ],
                         [
-                            'fecha_fin' => $c['fecha_fin'],
                             'monto_total' => $c['monto_total'],
                             'monto_promedio' => $c['monto_promedio'],
                             'variacion_porcentual' => $c['variacion_porcentual'],

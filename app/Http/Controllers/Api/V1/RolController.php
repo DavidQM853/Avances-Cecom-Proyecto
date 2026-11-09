@@ -3,15 +3,19 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
-use App\Models\HistorialAsignacion;
 use App\Models\Rol;
 use App\Models\User;
+use App\Services\RolDinamicoService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class RolController extends Controller
 {
+    public function __construct(
+        protected RolDinamicoService $rolDinamicoService
+    ) {}
+
     /**
      * Listar roles del sistema (estáticos y dinámicos).
      */
@@ -107,7 +111,8 @@ class RolController extends Controller
     }
 
     /**
-     * Asignar rol a un usuario con restricciones OPEX y vigencia temporal.
+     * Asignar rol a un usuario con restricciones OPEX (tabla user_rol_categoria_restriccion)
+     * y vigencia temporal, respetando la restricción ck_ur_alcance de cecom_presupuestos_er.
      */
     public function asignarUsuario(Request $request, Rol $rol): JsonResponse
     {
@@ -122,26 +127,14 @@ class RolController extends Controller
 
         $user = User::findOrFail($validated['user_id']);
 
-        // Registrar en pivote
-        $user->roles()->syncWithoutDetaching([
-            $rol->id => [
-                'departamento_id' => $validated['departamento_id'] ?? null,
-                'restricciones_opex' => isset($validated['restricciones_opex']) ? json_encode($validated['restricciones_opex']) : null,
-                'vigencia_inicio' => $validated['vigencia_inicio'] ?? null,
-                'vigencia_fin' => $validated['vigencia_fin'] ?? null,
-                'activo' => true,
-            ],
-        ]);
-
-        // Registrar auditoría
-        HistorialAsignacion::create([
-            'user_id' => $user->id,
-            'rol_id' => $rol->id,
-            'accion' => 'asignar',
-            'datos_nuevos' => $validated,
-            'motivo' => $validated['motivo'] ?? 'Asignación manual de rol',
-            'ejecutado_por' => $request->user()->id,
-        ]);
+        $this->rolDinamicoService->asignarRol(
+            $user,
+            $rol,
+            $validated['departamento_id'] ?? null,
+            $validated['restricciones_opex'] ?? null,
+            $validated['motivo'] ?? 'Asignación manual de rol',
+            $request->user()?->id
+        );
 
         return response()->json([
             'message' => "Rol '{$rol->nombre}' asignado correctamente al usuario '{$user->name}'",
@@ -153,15 +146,12 @@ class RolController extends Controller
      */
     public function revocarUsuario(Request $request, Rol $rol, User $user): JsonResponse
     {
-        $user->roles()->detach($rol->id);
-
-        HistorialAsignacion::create([
-            'user_id' => $user->id,
-            'rol_id' => $rol->id,
-            'accion' => 'revocar',
-            'motivo' => $request->input('motivo', 'Revocación manual'),
-            'ejecutado_por' => $request->user()->id,
-        ]);
+        $this->rolDinamicoService->revocarRol(
+            $user,
+            $rol,
+            $request->input('motivo', 'Revocación manual'),
+            $request->user()?->id
+        );
 
         return response()->json([
             'message' => "Rol '{$rol->nombre}' revocado al usuario '{$user->name}'",

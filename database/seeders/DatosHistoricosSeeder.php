@@ -4,11 +4,14 @@ namespace Database\Seeders;
 
 use App\Enums\EstadoPresupuesto;
 use App\Models\CategoriaOpex;
+use App\Models\CompromisoReserva;
 use App\Models\Departamento;
 use App\Models\GastoOperativo;
+use App\Models\ModeloPredictivo;
 use App\Models\PartidaPresupuestal;
 use App\Models\PeriodoFiscal;
 use App\Models\Presupuesto;
+use App\Models\ProyeccionAnual;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Database\Seeder;
@@ -16,7 +19,9 @@ use Illuminate\Database\Seeder;
 class DatosHistoricosSeeder extends Seeder
 {
     /**
-     * Genera datos históricos de presupuestos, partidas y gastos para 2024, 2025 y 2026.
+     * Genera datos históricos de presupuestos, partidas, compromisos_reserva,
+     * gastos y proyecciones para 2024, 2025 y 2026 cumpliendo todas las
+     * restricciones CHECK y vistas de conciliación de cecom_presupuestos_er.
      */
     public function run(): void
     {
@@ -39,6 +44,20 @@ class DatosHistoricosSeeder extends Seeder
             'OPEX-010' => ['Gastos operativos menores', 'Cuotas de suscripción técnica'],
         ];
 
+        // Modelo predictivo base para alimentar proyecciones_anuales
+        $modelo = ModeloPredictivo::firstOrCreate(
+            ['version' => 'cecom-opex-prophet-v1.0'],
+            [
+                'version_datos' => 'dataset-historico-2024-2025',
+                'entrenamiento_desde' => '2024-01-01',
+                'entrenamiento_hasta' => '2025-06-30',
+                'validacion_desde' => '2025-07-01',
+                'validacion_hasta' => '2025-12-31',
+                'metricas_validacion' => ['mae' => 42150.25, 'mape' => 4.82, 'r2' => 0.94],
+                'referencia_artefacto' => 'storage/models/cecom-opex-prophet-v1.0.json',
+            ]
+        );
+
         foreach ($anios as $anio) {
             $periodoAnual = PeriodoFiscal::where('anio', $anio)
                 ->whereNull('trimestre')
@@ -50,7 +69,6 @@ class DatosHistoricosSeeder extends Seeder
             }
 
             foreach ($departamentos as $depto) {
-                // Monto presupuestado anual según departamento
                 $baseMonto = match ($depto->codigo) {
                     'AF' => 3500000.00,
                     'TI' => 4800000.00,
@@ -62,7 +80,6 @@ class DatosHistoricosSeeder extends Seeder
                     default => 2000000.00,
                 };
 
-                // Variación anual para ver cambios YoY (incremento ~5-10% anual)
                 $factorAnio = 1 + (($anio - 2024) * 0.08);
                 $montoTotal = round($baseMonto * $factorAnio, 2);
 
@@ -85,16 +102,20 @@ class DatosHistoricosSeeder extends Seeder
                     'notas' => "Presupuesto operativo aprobado para {$depto->nombre} ejercicio {$anio}",
                 ]);
 
-                // Distribuir en partidas por categoría
                 $totalCategorias = $categorias->count();
                 $montoPorCategoria = round($montoTotal / $totalCategorias, 2);
                 $totalEjercidoPresupuesto = 0;
+                $totalComprometidoPresupuesto = 0;
+                $totalAsignadoPresupuesto = 0;
 
-                // Hasta qué mes generar gastos en 2026 (hasta agosto actual)
                 $mesMaximo = ($anio === 2026) ? 8 : 12;
 
-                foreach ($categorias as $cat) {
-                    $montoAsignadoPartida = $montoPorCategoria;
+                foreach ($categorias as $idx => $cat) {
+                    // Ajustar última partida por centavos de redondeo para conciliación exacta con monto_total
+                    $montoAsignadoPartida = ($idx === $totalCategorias - 1)
+                        ? round($montoTotal - $totalAsignadoPresupuesto, 2)
+                        : $montoPorCategoria;
+                    $totalAsignadoPresupuesto += $montoAsignadoPartida;
 
                     $partida = PartidaPresupuestal::create([
                         'presupuesto_id' => $presupuesto->id,
@@ -106,24 +127,49 @@ class DatosHistoricosSeeder extends Seeder
 
                     $conceptos = $conceptosPorCategoria[$cat->codigo] ?? ['Gasto operativo general'];
                     $totalEjercidoPartida = 0;
+                    $compromisoPartida = 0;
 
-                    // Generar 1 a 3 gastos por mes
+                    // Para 2026 crear una reserva activa (5% de la partida) para cuadrar v_partidas_conciliacion
+                    if ($anio === 2026 && $admin) {
+                        $compromisoPartida = round($montoAsignadoPartida * 0.05, 2);
+                        CompromisoReserva::create([
+                            'partida_id' => $partida->id,
+                            'creado_por' => $admin->id,
+                            'referencia_documento' => "RES-{$anio}-{$depto->codigo}-{$cat->codigo}",
+                            'monto_original' => $compromisoPartida,
+                            'monto_liberado' => 0,
+                            'estado' => 'activa',
+                        ]);
+                    }
+
+                    // Techo disponible para gastos sin violar ck_partida_montos (ejercido + comprometido <= asignado)
+                    $techoGastosPartida = round(($montoAsignadoPartida - $compromisoPartida) * 0.90, 2);
+
                     for ($mes = 1; $mes <= $mesMaximo; $mes++) {
-                        $gastosEnMes = rand(1, 3);
+                        $gastosEnMes = rand(1, 2);
                         for ($g = 1; $g <= $gastosEnMes; $g++) {
                             $dia = rand(1, 28);
                             $fechaGasto = Carbon::create($anio, $mes, $dia)->toDateString();
 
                             $concepto = $conceptos[array_rand($conceptos)];
-                            // Monto proporcional al presupuesto mensual de la partida
-                            $montoGasto = round(rand(5000, (int)($montoAsignadoPartida / 14)), 2);
+                            // En JR 2026 asegurar alta ejecución (>=82%) para pruebas deterministas del rol Aprobador
+                            if ($depto->codigo === 'JR' && $anio === 2026) {
+                                $montoGasto = round(($montoAsignadoPartida * 0.85) / ($mesMaximo * $gastosEnMes), 2);
+                            } else {
+                                $maxGasto = max(1000, (int) ($montoAsignadoPartida / 22));
+                                $montoGasto = round(rand(1000, $maxGasto), 2);
+                            }
+
+                            if (($totalEjercidoPartida + $montoGasto) > $techoGastosPartida) {
+                                break;
+                            }
 
                             GastoOperativo::create([
                                 'partida_id' => $partida->id,
                                 'registrado_por' => $admin?->id,
                                 'monto' => $montoGasto,
                                 'concepto' => "{$concepto} - {$depto->codigo}",
-                                'referencia_documento' => "FAC-{$anio}-" . str_pad((string)rand(1000, 9999), 5, '0', STR_PAD_LEFT),
+                                'referencia_documento' => "FAC-{$anio}-" . str_pad((string) rand(1000, 9999), 5, '0', STR_PAD_LEFT),
                                 'fecha_gasto' => $fechaGasto,
                                 'fecha_registro' => $fechaGasto,
                                 'metadata' => [
@@ -132,20 +178,38 @@ class DatosHistoricosSeeder extends Seeder
                                 ],
                             ]);
 
-                            $totalEjercidoPartida += $montoGasto;
+                            $totalEjercidoPartida = round($totalEjercidoPartida + $montoGasto, 2);
                         }
                     }
 
-                    // Actualizar monto ejercido de la partida
-                    $partida->update(['monto_ejercido' => $totalEjercidoPartida]);
-                    $totalEjercidoPresupuesto += $totalEjercidoPartida;
+                    $partida->update([
+                        'monto_ejercido' => $totalEjercidoPartida,
+                        'monto_comprometido' => $compromisoPartida,
+                    ]);
+
+                    $totalEjercidoPresupuesto = round($totalEjercidoPresupuesto + $totalEjercidoPartida, 2);
+                    $totalComprometidoPresupuesto = round($totalComprometidoPresupuesto + $compromisoPartida, 2);
                 }
 
-                // Actualizar monto ejercido del presupuesto
+                // Actualizar presupuesto cuadrando con la suma de sus partidas (v_presupuestos_conciliacion)
                 $presupuesto->update([
                     'monto_ejercido' => $totalEjercidoPresupuesto,
-                    'monto_comprometido' => ($anio === 2026) ? round($montoTotal * 0.10, 2) : 0,
+                    'monto_comprometido' => $totalComprometidoPresupuesto,
                 ]);
+
+                // Registrar proyección anual hacia el siguiente ejercicio
+                ProyeccionAnual::firstOrCreate(
+                    [
+                        'modelo_id' => $modelo->id,
+                        'departamento_id' => $depto->id,
+                        'anio_base' => $anio,
+                        'anio_objetivo' => $anio + 1,
+                        'fecha_corte_datos' => "{$anio}-12-31",
+                    ],
+                    [
+                        'monto_proyectado' => round($montoTotal * 1.07, 2),
+                    ]
+                );
             }
         }
     }

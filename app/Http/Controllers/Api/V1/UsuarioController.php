@@ -5,11 +5,13 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\DB;
 
 class UsuarioController extends Controller
 {
     /**
-     * Calcula los permisos efectivos de un usuario consolidando roles vigentes y restricciones OPEX.
+     * Calcula los permisos efectivos de un usuario consolidando roles vigentes
+     * y restricciones OPEX desde la tabla user_rol_categoria_restriccion.
      */
     public function permisosEfectivos(User $user): JsonResponse
     {
@@ -24,16 +26,18 @@ class UsuarioController extends Controller
             ];
         })->unique('slug')->values();
 
-        // Consolidar restricciones OPEX de los roles
+        // Consolidar restricciones OPEX desde user_rol_categoria_restriccion
+        $userRolIds = $rolesVigentes->pluck('pivot.id')->filter()->values();
         $restriccionesOpex = [];
-        foreach ($rolesVigentes as $rol) {
-            $raw = $rol->pivot->restricciones_opex;
-            if ($raw) {
-                $dec = is_array($raw) ? $raw : json_decode($raw, true);
-                if (is_array($dec)) {
-                    $restriccionesOpex = array_merge($restriccionesOpex, $dec);
-                }
-            }
+
+        if ($userRolIds->isNotEmpty()) {
+            $restriccionesOpex = DB::table('user_rol_categoria_restriccion')
+                ->join('categorias_opex', 'user_rol_categoria_restriccion.categoria_opex_id', '=', 'categorias_opex.id')
+                ->whereIn('user_rol_categoria_restriccion.user_rol_id', $userRolIds)
+                ->pluck('categorias_opex.codigo')
+                ->unique()
+                ->values()
+                ->all();
         }
 
         return response()->json([
@@ -52,10 +56,12 @@ class UsuarioController extends Controller
                 'nombre' => $r->nombre,
                 'slug' => $r->slug,
                 'es_dinamico' => $r->es_dinamico,
+                'alcance_global' => (bool) $r->pivot->alcance_global,
+                'departamento_id' => $r->pivot->departamento_id,
                 'vigencia_fin' => $r->pivot->vigencia_fin,
             ]),
             'permisos_efectivos' => $permisosConsolidados,
-            'restricciones_opex' => array_values(array_unique($restriccionesOpex)),
+            'restricciones_opex' => $restriccionesOpex,
         ]);
     }
 }

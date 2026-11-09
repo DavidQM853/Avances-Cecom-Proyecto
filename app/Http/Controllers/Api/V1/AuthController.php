@@ -6,11 +6,29 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
 {
+    /**
+     * Obtiene los códigos de categorías OPEX restringidas para una asignación user_rol.
+     */
+    private function obtenerRestriccionesRol(?int $userRolId): array
+    {
+        if (!$userRolId) {
+            return [];
+        }
+
+        return DB::table('user_rol_categoria_restriccion')
+            ->join('categorias_opex', 'user_rol_categoria_restriccion.categoria_opex_id', '=', 'categorias_opex.id')
+            ->where('user_rol_categoria_restriccion.user_rol_id', $userRolId)
+            ->pluck('categorias_opex.codigo')
+            ->values()
+            ->all();
+    }
+
     /**
      * Iniciar sesión y emitir token Sanctum.
      */
@@ -61,7 +79,9 @@ class AuthController extends Controller
                     'nombre' => $r->nombre,
                     'slug' => $r->slug,
                     'es_dinamico' => $r->es_dinamico,
-                    'restricciones_opex' => $r->pivot->restricciones_opex,
+                    'alcance_global' => (bool) $r->pivot->alcance_global,
+                    'departamento_id' => $r->pivot->departamento_id,
+                    'restricciones_opex' => $this->obtenerRestriccionesRol($r->pivot->id),
                 ]),
                 'permisos' => $permisos,
             ],
@@ -104,7 +124,9 @@ class AuthController extends Controller
                     'nombre' => $r->nombre,
                     'slug' => $r->slug,
                     'es_dinamico' => $r->es_dinamico,
-                    'restricciones_opex' => $r->pivot->restricciones_opex,
+                    'alcance_global' => (bool) $r->pivot->alcance_global,
+                    'departamento_id' => $r->pivot->departamento_id,
+                    'restricciones_opex' => $this->obtenerRestriccionesRol($r->pivot->id),
                 ]),
                 'permisos' => $permisos,
             ],

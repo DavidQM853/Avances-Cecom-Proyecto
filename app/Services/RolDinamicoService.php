@@ -2,12 +2,16 @@
 
 namespace App\Services;
 
+use App\Models\BitacoraEvento;
+use App\Models\CategoriaOpex;
 use App\Models\Departamento;
 use App\Models\HistorialAsignacion;
 use App\Models\Presupuesto;
 use App\Models\Rol;
 use App\Models\User;
+use App\Models\UserRolCategoriaRestriccion;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 
 class RolDinamicoService
 {
@@ -49,6 +53,19 @@ class RolDinamicoService
         $analisisVariabilidad = $this->agregacionService->calcularVariabilidadMensual($anio, $departamento->id);
         $coeficienteVariacion = $analisisVariabilidad['coeficiente_variacion'] ?? 0;
 
+        // Calcular meses consecutivos en los que el gasto mensual superó el promedio/umbral mensual
+        $presupuestoMensualEsperado = $presupuesto->monto_total > 0 ? ($presupuesto->monto_total / 12) : 0;
+        $mesesConsecutivosExcedido = 0;
+        $maxConsecutivos = 0;
+        foreach ($analisisVariabilidad['serie_mensual'] ?? [] as $mesItem) {
+            if ($presupuestoMensualEsperado > 0 && ($mesItem['monto_total'] ?? 0) > ($presupuestoMensualEsperado * 0.95)) {
+                $mesesConsecutivosExcedido++;
+                $maxConsecutivos = max($maxConsecutivos, $mesesConsecutivosExcedido);
+            } else {
+                $mesesConsecutivosExcedido = 0;
+            }
+        }
+
         // Comparativa YoY para variación anual
         $presupuestoAnterior = Presupuesto::where('departamento_id', $departamento->id)
             ->whereHas('periodoFiscal', fn($q) => $q->where('anio', $anio - 1)->whereNull('trimestre')->whereNull('mes'))
@@ -66,6 +83,7 @@ class RolDinamicoService
             'porcentaje_ejecucion' => $porcentajeEjecucion,
             'variacion_interanual' => $variacionInteranual,
             'coeficiente_variacion' => $coeficienteVariacion,
+            'meses_consecutivos_excedido' => $maxConsecutivos,
         ];
 
         $accionesTomadas = [];
@@ -140,40 +158,107 @@ class RolDinamicoService
         return true;
     }
 
-    private function asignarRol(User $user, Rol $rol, int $departamentoId, ?array $restriccionesOpex, string $motivo): void
+    /**
+     * Asigna el rol en user_rol (respetando ck_ur_alcance) y persiste las
+     * restricciones de categorías OPEX en user_rol_categoria_restriccion.
+     */
+    public function asignarRol(User $user, Rol $rol, ?int $departamentoId, ?array $restriccionesOpex, string $motivo, ?int $ejecutadoPor = null): void
     {
-        $user->roles()->syncWithoutDetaching([
-            $rol->id => [
-                'departamento_id' => $departamentoId,
-                'alcance_global' => false,
-                'vigencia_inicio' => now()->toDateString(),
-                'vigencia_fin' => now()->addMonths(3)->toDateString(),
-                'activo' => true,
-            ],
-        ]);
+        DB::transaction(function () use ($user, $rol, $departamentoId, $restriccionesOpex, $motivo, $ejecutadoPor) {
+            $alcanceGlobal = $departamentoId === null;
 
-        HistorialAsignacion::create([
-            'user_id' => $user->id,
-            'rol_id' => $rol->id,
-            'accion' => 'asignar',
-            'datos_nuevos' => [
-                'departamento_id' => $departamentoId,
-                'restricciones_opex' => $restriccionesOpex,
-                'vigencia_meses' => 3,
-            ],
-            'motivo' => $motivo,
-        ]);
+            $user->roles()->syncWithoutDetaching([
+                $rol->id => [
+                    'departamento_id' => $departamentoId,
+                    'alcance_global' => $alcanceGlobal,
+                    'vigencia_inicio' => now()->toDateString(),
+                    'vigencia_fin' => now()->addMonths(3)->toDateString(),
+                    'activo' => true,
+                ],
+            ]);
+
+            $pivotRow = DB::table('user_rol')
+                ->where('user_id', $user->id)
+                ->where('rol_id', $rol->id)
+                ->latest('id')
+                ->first();
+
+            // Persistir restricciones OPEX en la tabla pivote normalizada user_rol_categoria_restriccion
+            if ($pivotRow && !empty($restriccionesOpex)) {
+                $categoriasIds = CategoriaOpex::whereIn('codigo', $restriccionesOpex)
+                    ->orWhereIn('id', array_filter($restriccionesOpex, 'is_numeric'))
+                    ->pluck('id');
+
+                foreach ($categoriasIds as $catId) {
+                    UserRolCategoriaRestriccion::firstOrCreate([
+                        'user_rol_id' => $pivotRow->id,
+                        'categoria_opex_id' => $catId,
+                    ]);
+                }
+            }
+
+            HistorialAsignacion::create([
+                'user_id' => $user->id,
+                'rol_id' => $rol->id,
+                'accion' => 'asignar',
+                'datos_nuevos' => [
+                    'departamento_id' => $departamentoId,
+                    'alcance_global' => $alcanceGlobal,
+                    'restricciones_opex' => $restriccionesOpex,
+                    'vigencia_meses' => 3,
+                ],
+                'motivo' => $motivo,
+                'ejecutado_por' => $ejecutadoPor,
+            ]);
+
+            if ($pivotRow) {
+                BitacoraEvento::create([
+                    'actor_id' => $ejecutadoPor,
+                    'entidad_tipo' => 'user_rol',
+                    'entidad_id' => $pivotRow->id,
+                    'accion' => 'asignar_rol',
+                    'motivo' => $motivo,
+                    'valores_despues' => [
+                        'user_id' => $user->id,
+                        'rol_id' => $rol->id,
+                        'departamento_id' => $departamentoId,
+                        'alcance_global' => $alcanceGlobal,
+                        'restricciones_opex' => $restriccionesOpex,
+                    ],
+                ]);
+            }
+        });
     }
 
-    private function revocarRol(User $user, Rol $rol, string $motivo): void
+    public function revocarRol(User $user, Rol $rol, string $motivo, ?int $ejecutadoPor = null): void
     {
-        $user->roles()->updateExistingPivot($rol->id, ['activo' => false]);
+        DB::transaction(function () use ($user, $rol, $motivo, $ejecutadoPor) {
+            $pivotRow = DB::table('user_rol')
+                ->where('user_id', $user->id)
+                ->where('rol_id', $rol->id)
+                ->first();
 
-        HistorialAsignacion::create([
-            'user_id' => $user->id,
-            'rol_id' => $rol->id,
-            'accion' => 'revocar',
-            'motivo' => $motivo,
-        ]);
+            $user->roles()->updateExistingPivot($rol->id, ['activo' => false]);
+
+            HistorialAsignacion::create([
+                'user_id' => $user->id,
+                'rol_id' => $rol->id,
+                'accion' => 'revocar',
+                'motivo' => $motivo,
+                'ejecutado_por' => $ejecutadoPor,
+            ]);
+
+            if ($pivotRow) {
+                BitacoraEvento::create([
+                    'actor_id' => $ejecutadoPor,
+                    'entidad_tipo' => 'user_rol',
+                    'entidad_id' => $pivotRow->id,
+                    'accion' => 'revocar_rol',
+                    'motivo' => $motivo,
+                    'valores_antes' => ['activo' => true],
+                    'valores_despues' => ['activo' => false],
+                ]);
+            }
+        });
     }
 }

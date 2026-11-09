@@ -2,8 +2,13 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
+/**
+ * Alineada con CECOM_Base_de_Datos.sql (cecom_presupuestos_er).
+ * Todas las FK usan ON DELETE RESTRICT, igual que el script oficial.
+ */
 return new class extends Migration
 {
     /**
@@ -18,13 +23,17 @@ return new class extends Migration
             $table->text('descripcion')->nullable();
             $table->foreignId('departamento_padre_id')
                   ->nullable()
-                  ->constrained('departamentos')
-                  ->nullOnDelete();
+                  ->constrained('departamentos', 'id', 'fk_depto_padre')
+                  ->restrictOnDelete();
             $table->boolean('activo')->default(true);
             $table->timestamps();
 
-            $table->index('activo');
+            $table->index('activo', 'idx_depto_activo');
         });
+
+        if (in_array(DB::getDriverName(), ['mysql', 'mariadb'])) {
+            DB::statement('ALTER TABLE departamentos ADD CONSTRAINT ck_depto_activo CHECK (activo IN (0,1))');
+        }
     }
 
     /**

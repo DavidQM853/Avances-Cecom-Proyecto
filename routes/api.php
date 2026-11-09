@@ -1,6 +1,5 @@
 <?php
 
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -9,13 +8,14 @@ use Illuminate\Support\Facades\Route;
 |--------------------------------------------------------------------------
 |
 | Todas las rutas API están versionadas bajo /api/v1/
-| Las rutas protegidas requieren autenticación via Sanctum.
+| Las rutas protegidas requieren autenticación via Sanctum y validan
+| control de acceso por rol (CheckRole) y restricciones OPEX (CheckOpexPermission).
 |
 */
 
-// ─── Rutas públicas ────────────────────────────────────────
-
 Route::prefix('v1')->group(function () {
+
+    // ─── Rutas públicas ────────────────────────────────────────
 
     Route::prefix('auth')->group(function () {
         Route::post('/login', [\App\Http\Controllers\Api\V1\AuthController::class, 'login']);
@@ -27,7 +27,7 @@ Route::prefix('v1')->group(function () {
         Route::get('/health', [\App\Http\Controllers\Api\V1\DashboardController::class, 'health']);
     });
 
-    // ─── Rutas protegidas ──────────────────────────────────
+    // ─── Rutas protegidas ──────────────────────────────────────
 
     Route::middleware('auth:sanctum')->group(function () {
 
@@ -44,18 +44,28 @@ Route::prefix('v1')->group(function () {
 
         // Presupuestos
         Route::apiResource('presupuestos', \App\Http\Controllers\Api\V1\PresupuestoController::class);
-        Route::patch('presupuestos/{presupuesto}/estado', [\App\Http\Controllers\Api\V1\PresupuestoController::class, 'cambiarEstado']);
+        Route::patch('presupuestos/{presupuesto}/estado', [\App\Http\Controllers\Api\V1\PresupuestoController::class, 'cambiarEstado'])
+            ->middleware('role:admin,aprobador,director');
         Route::get('presupuestos-yoy/comparativa', [\App\Http\Controllers\Api\V1\PresupuestoController::class, 'comparativaYoY']);
 
-        // Gastos Operativos
-        Route::apiResource('gastos', \App\Http\Controllers\Api\V1\GastoOperativoController::class);
+        // Gastos Operativos (protegidos con CheckOpexPermission en escritura)
+        Route::get('gastos', [\App\Http\Controllers\Api\V1\GastoOperativoController::class, 'index']);
+        Route::get('gastos/{gasto}', [\App\Http\Controllers\Api\V1\GastoOperativoController::class, 'show']);
+        Route::post('gastos', [\App\Http\Controllers\Api\V1\GastoOperativoController::class, 'store'])
+            ->middleware('opex.permission');
+        Route::put('gastos/{gasto}', [\App\Http\Controllers\Api\V1\GastoOperativoController::class, 'update'])
+            ->middleware('opex.permission');
+        Route::patch('gastos/{gasto}', [\App\Http\Controllers\Api\V1\GastoOperativoController::class, 'update'])
+            ->middleware('opex.permission');
+        Route::delete('gastos/{gasto}', [\App\Http\Controllers\Api\V1\GastoOperativoController::class, 'destroy'])
+            ->middleware('opex.permission');
 
         // Agregaciones y Filtros Temporales
         Route::prefix('agregaciones')->group(function () {
             Route::get('/', [\App\Http\Controllers\Api\V1\ReporteController::class, 'agregaciones']);
             Route::get('/tendencia', [\App\Http\Controllers\Api\V1\ReporteController::class, 'tendencia']);
-            Route::get('/variabilidad', [\App\Http\Controllers\Api\V1\ReporteController::class, 'variabilidad']);
-            Route::get('/yoy', [\App\Http\Controllers\Api\V1\ReporteController::class, 'yoy']);
+            Route::get('/variabilidad', [\App\Http\Controllers\Api\V1\ReporteController::class, 'variabilidadMensual']);
+            Route::get('/yoy', [\App\Http\Controllers\Api\V1\PresupuestoController::class, 'comparativaYoY']);
         });
 
         // Dashboard y KPIs
@@ -70,10 +80,14 @@ Route::prefix('v1')->group(function () {
             Route::get('/variabilidad-mensual', [\App\Http\Controllers\Api\V1\ReporteController::class, 'variabilidadMensual']);
         });
 
-        // Roles y Permisos
-        Route::apiResource('roles', \App\Http\Controllers\Api\V1\RolController::class);
-        Route::post('roles/{rol}/asignar-usuario', [\App\Http\Controllers\Api\V1\RolController::class, 'asignarUsuario']);
-        Route::delete('roles/{rol}/revocar-usuario/{user}', [\App\Http\Controllers\Api\V1\RolController::class, 'revocarUsuario']);
+        // Roles y Permisos (gestión restringida por CheckRole)
+        Route::get('roles', [\App\Http\Controllers\Api\V1\RolController::class, 'index']);
+        Route::get('roles/{rol}', [\App\Http\Controllers\Api\V1\RolController::class, 'show']);
+        Route::post('roles', [\App\Http\Controllers\Api\V1\RolController::class, 'store'])->middleware('role:admin');
+        Route::put('roles/{rol}', [\App\Http\Controllers\Api\V1\RolController::class, 'update'])->middleware('role:admin');
+        Route::patch('roles/{rol}', [\App\Http\Controllers\Api\V1\RolController::class, 'update'])->middleware('role:admin');
+        Route::post('roles/{rol}/asignar-usuario', [\App\Http\Controllers\Api\V1\RolController::class, 'asignarUsuario'])->middleware('role:admin');
+        Route::delete('roles/{rol}/revocar-usuario/{user}', [\App\Http\Controllers\Api\V1\RolController::class, 'revocarUsuario'])->middleware('role:admin');
         Route::get('usuarios/{user}/permisos-efectivos', [\App\Http\Controllers\Api\V1\UsuarioController::class, 'permisosEfectivos']);
     });
 });

@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -14,11 +15,11 @@ return new class extends Migration
         Schema::create('partidas_presupuestales', function (Blueprint $table) {
             $table->id();
             $table->foreignId('presupuesto_id')
-                  ->constrained('presupuestos')
-                  ->cascadeOnDelete();
+                  ->constrained('presupuestos', 'id', 'fk_partida_pres')
+                  ->restrictOnDelete();
             $table->foreignId('categoria_opex_id')
-                  ->constrained('categorias_opex')
-                  ->cascadeOnDelete();
+                  ->constrained('categorias_opex', 'id', 'fk_partida_categoria')
+                  ->restrictOnDelete();
             $table->decimal('monto_asignado', 15, 2);
             $table->decimal('monto_ejercido', 15, 2)->default(0);
             $table->decimal('monto_comprometido', 15, 2)->default(0);
@@ -26,11 +27,14 @@ return new class extends Migration
                   ->storedAs('monto_asignado - monto_ejercido - monto_comprometido');
             $table->timestamps();
 
-            // Índice para consultas de partidas por presupuesto y categoría
-            $table->index(['presupuesto_id', 'categoria_opex_id'], 'idx_partidas_presupuesto_cat');
             // Una categoría OPEX solo aparece una vez por presupuesto
-            $table->unique(['presupuesto_id', 'categoria_opex_id'], 'idx_partida_unica');
+            $table->unique(['presupuesto_id', 'categoria_opex_id'], 'uq_partida_pres_categoria');
         });
+
+        if (in_array(DB::getDriverName(), ['mysql', 'mariadb'])) {
+            DB::statement('ALTER TABLE partidas_presupuestales
+                ADD CONSTRAINT ck_partida_montos CHECK (monto_asignado>=0.01 AND monto_ejercido>=0 AND monto_comprometido>=0 AND monto_ejercido+monto_comprometido<=monto_asignado)');
+        }
     }
 
     /**
